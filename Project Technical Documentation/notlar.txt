@@ -1,0 +1,3 @@
+* Diğer api konuları (rate limit, jwt gibi) ayarla
+* next.js yi entegre et
+* jest ile test kullan

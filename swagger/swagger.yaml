@@ -1,0 +1,249 @@
+openapi: "3.0.0"
+info:
+  title: "A Rest API for my personal blog app"
+  description: "A Rest API for my personal blog app made by NodeJS, Express, TypeScript, PostgreSQL-Prisma"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:3000/api"
+    description: "Development Server"
+
+# Paths --------------------------------------------------------------------------
+paths:
+  # /posts -----------------------------------------------------------------------
+  /posts:
+
+    # Create post operation ------------------------------------------------------
+    post:
+      tags:
+        - Posts
+      summary: "Creates a post"
+      description: "Creates a post with title and content"
+      requestBody:
+        description: "Create post request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePost"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreatePost"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/posts/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created post link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+    
+    # Get all posts --------------------------------------------------------------
+    get:
+      tags:
+        - Posts
+      summary: "Retrieves all posts"
+      description: "Retrieves all posts"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Post"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  
+    # Update a post by id operation ----------------------------------------------
+    put:
+      tags:
+        - Posts
+      summary: "Update post by id"
+      description: "Update post title and content"
+      requestBody:
+        description: "Update post request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePost"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UpdatePost"
+      responses:
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  # /posts/{id} ------------------------------------------------------------------
+  /posts/{id}:
+
+    # Get post by id operation ---------------------------------------------------
+    get:
+      tags:
+        - Posts
+      summary: "Retrieves a post by post id"
+      description: "Retrieves a post by post id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Delete a post by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Posts
+      summary: "Deletes a post by given id"
+      description: "Deletes a post by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+      responses:
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+# Components ---------------------------------------------------------------------
+components:
+
+  # Schemas ----------------------------------------------------------------------
+  schemas:
+    
+    # Post Schemas ---------------------------------------------------------------
+
+    # Post Model -----------------------------------------------------------------
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The post id"
+          example: "000xy00-z000-0ab00-00c"
+        createdAt:
+          type: string
+          description: "Created date of the post"
+          example: "2023-03-14T21:49:57.272Z"
+        updatedAt:
+          type: string
+          description: "Updated date of the post"
+          example: "2023-03-14T21:49:57.272Z"
+        title:
+          type: string
+          description: "The post title"
+          example: "First Post Title"
+        content:
+          type: string
+          description: "The post content"
+          example: "First post content..."
+          required: false
+    
+    # Create Post Model ------------------------------------------------------------
+    CreatePost:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The post title"
+          example: "First Post Title"
+        content:
+          type: string
+          description: "The post content"
+          example: "First post content..."
+      required:
+        - title
+
+    # Update Post Model ------------------------------------------------------------
+    UpdatePost:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "000xy00-z000-0ab00-00c"
+        title:
+          type: string
+          description: "The post title"
+          example: "First Post Title"
+        content:
+          type: string
+          description: "The post content"
+          example: "First post content..."
+      required:
+        - title
+        - id
+      
+    # Error Response Model ----------------------------------------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Internal server error"
+        level:
+          type: string
+          example: "level"
+        timestamp:
+          type: string
+          example: "2023-03-26 18:37:08:378"
+  
+  # Response Schemas ----------------------------------------------------------------
+  responses:
+    NotFound:
+      description: "The specified resource was not found"
+      content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: "Bad request"
+      content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    ServerError:
+      description: "Internal server error"
+      content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
