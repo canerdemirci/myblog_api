@@ -1,3 +1,8 @@
+/**
+ * @module postController
+ * Get posts, get a post, create a post, update a post, delete a post
+ */
+
 import CreatePostDTO from '../dtos/post/CreatePostDTO';
 import * as postRepository from '../repositories/postRepository';
 import { Request, Response } from 'express';
@@ -6,6 +11,18 @@ import asyncHandler from 'express-async-handler';
 import { ApiError } from '../middleware/error.middleware';
 import UpdatePostDTO from '../dtos/post/UpdatePostDTO';
 
+/**
+ * This controller takes title and content strings from request.
+ * Creates a DTO
+ * Apply filter it
+ * Validate it
+ * Creates a post in the database
+ * Converts it to js object and sends it as a response with 201 status code
+ * with created post location.
+ * Errors that may occur:
+ *  - 500 Internal server error
+ *  - 400 Bad request - Validation error
+ */
 const createPost = asyncHandler(async (req: Request, res: Response) => {
     const { title, content } : { title: string, content?: string } = req.body;
     const createPostDTO = new CreatePostDTO(title, content);

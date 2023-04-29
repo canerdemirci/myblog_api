@@ -1,3 +1,8 @@
+/**
+ * @module postsRouter
+ * Post routes
+ */
+
 import express, { Router } from 'express';
 import { createPost, getPosts, getPost, deletePost, updatePost } from '../controllers/postController';
 
