@@ -1,3 +1,8 @@
+/**
+ * @module PostDTO
+ * To use the fetched post object from database.
+ */
+
 import CreatePostDTO from "./CreatePostDTO";
 
 export default class PostDTO extends CreatePostDTO {

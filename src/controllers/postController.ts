@@ -33,11 +33,25 @@ const createPost = asyncHandler(async (req: Request, res: Response) => {
     status201CreatedWithLocation(res, `/api/posts/${postJson.id}`).json(postJson);
 });
 
+/**
+ * This controller fetchs all posts in the database and
+ * sends them as a response with 200 status code with array of post objects
+ * Errors that may occur:
+ *  - 500 Internal server error
+ */
 const getPosts = asyncHandler(async (req: Request, res: Response) => {
     const posts = await postRepository.getPosts();
     status200Ok(res).json(posts.map(p => p.toObject()));
 });
 
+/**
+ * This controller fetchs a post by id then sends it as a response
+ * with status code 200 with post object.
+ * Errors that may occur:
+ *  - 500 Internal server error
+ *  - 400 Bad request
+ *  - 404 Not found
+ */
 const getPost = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id;
 
@@ -51,6 +65,14 @@ const getPost = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * This controller deletes a post by id from database then response
+ * 204 No Content.
+ * Errors that may occur:
+ *  - 500 Internal server error
+ *  - 400 Bad Request
+ *  - 404 Not Found
+ */
 const deletePost = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id;
 
@@ -64,6 +86,18 @@ const deletePost = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * This controller updates a post.
+ * Takes id, title and content strings
+ * then creates DTO,
+ * apply filter,
+ * validate then
+ * updates from database.
+ * Send response 204 No Content.
+ * Errors that may occur:
+ *  - 500 Internal server error
+ *  - 400 Bad Request
+ */
 const updatePost = asyncHandler(async (req: Request, res: Response) => {
     const { id, title, content } : { id: string, title: string, content?: string } = req.body;
     const updatePostDTO = new UpdatePostDTO(id, title, content);

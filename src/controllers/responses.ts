@@ -1,3 +1,9 @@
+/**
+ * @module responses
+ * Response functions like 200, 201, 500...
+ * To remember status codes as name.
+ */
+
 import { Response } from 'express';
 
 export const status200Ok = (res: Response): Response<unknown, Record<string, unknown>> => res.status(200);

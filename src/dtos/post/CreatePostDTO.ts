@@ -1,3 +1,8 @@
+/**
+ * @module CreatePostDTO
+ * Used to create post in database.
+ */
+
 import joi from 'joi';
 
 export default class CreatePostDTO {
@@ -9,6 +14,9 @@ export default class CreatePostDTO {
         this.content = content;
     }
     
+    /**
+     * Object to send prisma for create post
+     */
     get prismaCreateData() {
         return {
             title: this.title,
@@ -16,11 +24,19 @@ export default class CreatePostDTO {
         };
     }
 
+    /**
+     * Trim title and content
+     */
     applyFilter() {
         this.title = this.title.trim();
         this.content = this.content?.trim();
     }
 
+    /**
+     * Validate given title string
+     * Throw ValidationError if it fails
+     * @returns Promise<any>
+     */
     async validate() : Promise<any | never> {
         const scheme = joi.object({
             title: joi.string().max(255).required()

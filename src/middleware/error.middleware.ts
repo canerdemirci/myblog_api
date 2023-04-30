@@ -1,7 +1,16 @@
+/**
+ * @module errorMiddleware
+ * Error handling module.
+ */
+
 import { NextFunction, Request, Response } from 'express';
 import { ValidationError } from 'joi';
 import logger from '../utils/logger';
 
+/**
+ * Custom Error for this Api
+ * @property statusCode
+ */
 export class ApiError extends Error {
     statusCode: number;
     
@@ -12,6 +21,20 @@ export class ApiError extends Error {
     }
 }
 
+/**
+ * Error handling function. This function send response
+ * with error info ({ success: boolean, message: string, stack: string}) and
+ * log error info same way.
+ * If error is
+ * - ApiError: statusCode = Error's status code
+ * - ValidationError: statusCode = 400 Bad Request
+ * - Else: statusCode = 500 Internal Server Error
+ * @param err 
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns void
+ */
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
     if (res.headersSent) {
         return next(err)

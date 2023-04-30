@@ -1,3 +1,8 @@
+/**
+ * @module UpdatePostDTO
+ * Used to update post in database.
+ */
+
 import CreatePostDTO from "./CreatePostDTO";
 import joi from 'joi';
 
@@ -9,6 +14,9 @@ export default class UpdatePostDTO extends CreatePostDTO {
         this.id = id;
     }
 
+    /**
+     * Object to send prisma for update post
+     */
     get prismaUpdateData() {
         return {
             id: this.id,
@@ -23,6 +31,11 @@ export default class UpdatePostDTO extends CreatePostDTO {
         this.content = this.content?.trim();
     }
 
+    /**
+     * Validate given title string
+     * Throw ValidationError if it fails
+     * @returns Promise<any>
+     */
     async validate() : Promise<any | never> {
         const scheme = joi.object({
             id: joi.string().required(),
