@@ -3,13 +3,66 @@ info:
   title: "A Rest API for my personal blog app"
   description: "A Rest API for my personal blog app made by NodeJS, Express, TypeScript, PostgreSQL-Prisma"
   version: "1.0.0"
-
 servers:
-  - url: "http://localhost:3000/api"
+  - url: "http://localhost:8000/api"
     description: "Development Server"
+security:
+  - ApiKeyAuth: []
 
 # Paths --------------------------------------------------------------------------
 paths:
+  /upload:
+    post:
+      tags:
+        - Uploads
+      summary: Uploads a file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              maximum: 5
+              properties:
+                "coverImage":
+                    type: string
+                    format: binary
+            encoding:
+              coverImage:
+                contentType: image/png, image/jpeg, image/jpg, image/gif
+      responses:
+        '200':
+          description: File uploaded successfully
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: File Error Code (1, 2, 3, or 4)
+                  message:
+                    type: string
+                    description: File Error Message
+  /delete-cover/{fileName}:
+    delete:
+      tags:
+        - Delete cover
+      summary: Deletes a post cover image
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully
+        "500":
+          $ref: "#/components/responses/ServerError"
+
   # /posts -----------------------------------------------------------------------
   /posts:
 
@@ -142,9 +195,123 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
+  # /tags -----------------------------------------------------------------------
+  /tags:
+
+    # Create tag operation ------------------------------------------------------
+    post:
+      tags:
+        - Tags
+      summary: "Creates a tag"
+      description: "Creates a tag with a name"
+      requestBody:
+        description: "Create tag request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTag"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateTag"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/tags/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created tag link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+    
+    # Get all tags --------------------------------------------------------------
+    get:
+      tags:
+        - Tags
+      summary: "Retrieves all tags"
+      description: "Retrieves all tags"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Tag"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  
+  # /tags/{id} ------------------------------------------------------------------
+  /tags/{id}:
+
+    # Get tag by id operation ---------------------------------------------------
+    get:
+      tags:
+        - Tags
+      summary: "Retrieves a tag by tag id"
+      description: "Retrieves a tag by tag id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Tag id"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Delete a tag by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Tags
+      summary: "Deletes a tag by given id"
+      description: "Deletes a tag by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Tag id"
+          schema:
+            type: string
+      responses:
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
 # Components ---------------------------------------------------------------------
 components:
-
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+  
   # Schemas ----------------------------------------------------------------------
   schemas:
     
@@ -174,7 +341,31 @@ components:
           type: string
           description: "The post content"
           example: "First post content..."
-          required: false
+          required: ["false"]
+        cover:
+          type: string
+          description: "The post cover"
+          example: "First post cover..."
+          required: ["false"]
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          description: "The post tags"
+          example: "['Typescript', 'React', 'Vue']"
+          required: ["true"]
+        shareCount:
+          type: number
+          description: "The post share count"
+          example: 0
+        likeCount:
+          type: number
+          description: "The post share count"
+          example: 0
+        viewCount:
+          type: number
+          description: "The post share count"
+          example: 0
     
     # Create Post Model ------------------------------------------------------------
     CreatePost:
@@ -188,8 +379,20 @@ components:
           type: string
           description: "The post content"
           example: "First post content..."
+        cover:
+          type: string
+          description: "The post cover"
+          example: "First post cover..."
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          description: "The post tags"
+          example: "['Typescript', 'React', 'Vue']"
+          required: ["true"]
       required:
         - title
+        - tags
 
     # Update Post Model ------------------------------------------------------------
     UpdatePost:
@@ -206,9 +409,47 @@ components:
           type: string
           description: "The post content"
           example: "First post content..."
+        cover:
+          type: string
+          description: "The post cover"
+          example: "First post cover..."
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          description: "The post tags"
+          example: "['Typescript', 'React', 'Vue']"
+          required: ["true"]
       required:
         - title
         - id
+        - tags
+
+    # Tag Schemas ---------------------------------------------------------------
+
+    # Tag Model -----------------------------------------------------------------
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The tag id"
+          example: "000xy00-z000-0ab00-00c"
+        name:
+          type: string
+          description: "The tag name"
+          example: "First Tag Name"
+    
+    # Create Tag Model ------------------------------------------------------------
+    CreateTag:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The tag name"
+          example: "First tag name"
+      required:
+        - name
       
     # Error Response Model ----------------------------------------------------------
     ErrorResponse:
@@ -229,6 +470,8 @@ components:
   
   # Response Schemas ----------------------------------------------------------------
   responses:
+    UnauthorizedError:
+      description: API key is missing or invalid
     NotFound:
       description: "The specified resource was not found"
       content:

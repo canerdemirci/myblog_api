@@ -3,15 +3,40 @@
  * Post routes
  */
 
-import express, { Router } from 'express';
-import { createPost, getPosts, getPost, deletePost, updatePost } from '../controllers/postController';
+import express, { Router } from 'express'
+import { createPost, getPosts, getPost, deletePost, updatePost }
+    from '../controllers/post_controller'
+import CreatePostDTO from '../dtos/post/CreatePostDTO'
+import PostDTO from '../dtos/post/PostDTO'
+import UpdatePostDTO from '../dtos/post/UpdatePostDTO'
+import { validationErrorMiddleware } from '../middleware/error'
 
-const router: Router = express.Router();
+const postRouter: Router = express.Router()
 
-router.post('/', createPost);
-router.get('/', getPosts);
-router.get('/:id', getPost);
-router.delete('/:id', deletePost);
-router.put('/', updatePost);
+postRouter.get('/', getPosts)
+postRouter.get(
+    '/:id',
+    PostDTO.validationAndSanitizationSchema(),
+    validationErrorMiddleware,
+    getPost
+)
+postRouter.post(
+    '/',
+    CreatePostDTO.validationAndSanitizationSchema(),
+    validationErrorMiddleware,
+    createPost
+)
+postRouter.delete(
+    '/:id',
+    PostDTO.validationAndSanitizationSchema(),
+    validationErrorMiddleware,
+    deletePost
+)
+postRouter.put(
+    '/',
+    UpdatePostDTO.validationAndSanitizationSchema(),
+    validationErrorMiddleware,
+    updatePost
+)
 
-export default router;
+export default postRouter

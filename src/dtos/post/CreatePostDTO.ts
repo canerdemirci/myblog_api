@@ -3,45 +3,53 @@
  * Used to create post in database.
  */
 
-import joi from 'joi';
+import { body } from 'express-validator'
 
 export default class CreatePostDTO {
-    title: string;
-    content?: string;
+    protected _title: string
+    protected _content?: string
+    protected _cover?: string
 
-    constructor(title: string, content?: string) {
-        this.title = title;
-        this.content = content;
-    }
-    
-    /**
-     * Object to send prisma for create post
-     */
-    get prismaCreateData() {
-        return {
-            title: this.title,
-            content: this.content
-        };
+    constructor(title: string, content?: string, cover?: string) {
+        this._title = title
+        this._content = content
+        this._cover = cover
     }
 
-    /**
-     * Trim title and content
-     */
-    applyFilter() {
-        this.title = this.title.trim();
-        this.content = this.content?.trim();
+    get title() {
+        return this._title
     }
 
-    /**
-     * Validate given title string
-     * Throw ValidationError if it fails
-     * @returns Promise<any>
-     */
-    async validate() : Promise<any | never> {
-        const scheme = joi.object({
-            title: joi.string().max(255).required()
-        });
+    get content() {
+        return this._content
+    }
 
-        return await scheme.validateAsync({ title: this.title });
+    get cover() {
+        return this._cover
+    }
+
+    static validationAndSanitizationSchema() {
+        return [
+            body('title')
+                .isString()
+                .notEmpty().withMessage('Makale başlığı boş bırakılamaz.')
+                .isLength({max: 255}).withMessage('Makale başlığı en fazla 250 karakter olabilir.')
+                .trim()
+                .escape(),
+            body('content')
+                .optional({values: 'falsy'})
+                .isString(),
+            body('cover')
+                .optional({values: 'falsy'})
+                .isString()
+                .trim()
+                .escape(),
+            body('tags.*')
+                .isString()
+                .notEmpty().withMessage('Etiket adı boş bırakılamaz.')
+                .isLength({max: 100}).withMessage('Etiket adı en fazla 100 karakter olabilir.')
+                .trim()
+                .escape(),
+        ]
     }
 }

@@ -3,8 +3,8 @@
  * For logging with winston package.
  */
 
-import winston from 'winston';
-import 'winston-daily-rotate-file';
+import winston from 'winston'
+import 'winston-daily-rotate-file'
 
 /**
  * Log severity levels
@@ -20,15 +20,15 @@ const levels = {
 /**
  * This method set the current severity based on
  * the current NODE_ENV: show all the log levels
- * if the server was run in development mode; otherwise,
+ * if the server was run in development mode otherwise,
  * if it was run in production, show only warn and error messages.
  * @returns {string}
  */
 const level = () : string => {
-    const env = process.env.NODE_ENV || 'development';
-    const isDevelopment = env === 'development';
+    const env = process.env.NODE_ENV || 'development'
+    const isDevelopment = env === 'development'
 
-    return isDevelopment ? 'debug' : 'warn';
+    return isDevelopment ? 'debug' : 'warn'
 }
 
 /**
@@ -42,7 +42,7 @@ const colors = {
     debug: 'white'
 }
 
-winston.addColors(colors);
+winston.addColors(colors)
 
 const format = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms'}),
@@ -50,7 +50,7 @@ const format = winston.format.combine(
     winston.format.colorize({ all: true }),
     // Define the format of the message showing the timestamp, the level and the message
     winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
-);
+)
 
 /**
  * Define which transports the logger must use to print out messages.
@@ -76,13 +76,13 @@ const transports = [
         maxFiles: '14d',
         level: 'info'
     }),
-];
+]
 
 const logger = winston.createLogger({
     level: level(),
     levels,
     format,
     transports
-});
+})
 
-export default logger;
+export default logger

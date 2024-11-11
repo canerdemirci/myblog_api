@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  seed = "prisma/seed.ts"
 }
 
 datasource db {
@@ -16,4 +17,15 @@ model Post {
   updatedAt DateTime @updatedAt
   title String @db.VarChar(255)
   content String?
+  cover String? @db.VarChar(255)
+  tags Tag[]
+  shareCount Int @default(0)
+  likeCount Int @default(0)
+  viewCount Int @default(0)
+}
+
+model Tag {
+  id String @id @default(uuid())
+  name String @db.VarChar(100) @unique
+  posts Post[]
 }

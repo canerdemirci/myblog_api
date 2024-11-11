@@ -6,44 +6,6 @@
 - Create "tsconfig.json" command:
 > tsc --init
 
-### Typescript Eslint
-
-##### Packages
-> npm i -D @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint typescript
-
-##### Configuration
-- create .eslintrc.cjs file in project root
-
-```json
-// .eslintrc.cjs
-// Recommended configurations
-module.exports = {
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-  ],
-  plugins: ['@typescript-eslint'],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: true,
-    tsconfigRootDir: __dirname,
-  },
-  root: true,
-};
-```
-
-- In package.json script section
-
-```
-"scripts": {
-    "lint": "eslint -f unix \"src/**/*.{ts,tsx}\""
-},
-```
-
-##### Run eslint
-> npx eslint .
-
 ### Code Documentation
 
 ##### Tsdoc
