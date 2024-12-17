@@ -4,7 +4,7 @@
  */
 
 import CreateTagDTO from "./CreateTagDTO"
-import { body } from 'express-validator'
+import { param } from 'express-validator'
 
 export default class TagDTO extends CreateTagDTO {
     protected _id: string
@@ -26,7 +26,7 @@ export default class TagDTO extends CreateTagDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [body('id').escape()]
+        return [param('id').escape()]
     }
 
     static fromDB(tag: any) : TagDTO {

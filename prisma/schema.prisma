@@ -11,6 +11,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  GUEST
+  USER
+}
+
+enum InteractionType {
+  LIKE
+  UNLIKE
+  SHARE
+  VIEW
+}
+
 model Post {
   id String @id @default(uuid())
   createdAt DateTime @default(now())
@@ -22,10 +34,81 @@ model Post {
   shareCount Int @default(0)
   likeCount Int @default(0)
   viewCount Int @default(0)
+  postInteractions PostInteraction[]
+  comments Comment[]
+  bookmarks Bookmark[]
 }
 
 model Tag {
   id String @id @default(uuid())
   name String @db.VarChar(100) @unique
   posts Post[]
+}
+
+model Note {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content String
+  shareCount Int @default(0)
+  likeCount Int @default(0)
+  viewCount Int @default(0)
+  noteInteractions NoteInteraction[]
+}
+
+model PostInteraction {
+  id String @id @default(uuid())
+  role Role
+  guestId String?
+  userId String?
+  type InteractionType
+  post Post @relation(fields: [postId], references: [id])
+  postId String
+}
+
+model NoteInteraction {
+  id String @id @default(uuid())
+  role Role
+  guestId String?
+  userId String?
+  type InteractionType
+  note Note @relation(fields: [noteId], references: [id])
+  noteId String
+}
+
+model User {
+  id String @id @default(uuid())
+  email String @db.VarChar(320) @unique
+  name String?
+  image String?
+  password String? @db.VarChar(64)
+  provider String? @db.VarChar(100)
+  providerId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  comments Comment[]
+  bookmarks Bookmark[]
+}
+
+model Comment {
+  id String @id @default(uuid())
+  text String @db.VarChar(500)
+  postId String
+  userId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model Bookmark {
+  id String @id @default(uuid())
+  role Role
+  postId String
+  userId String?
+  guestId String?
+
+  user User? @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
 }

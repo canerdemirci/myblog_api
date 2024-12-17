@@ -3,7 +3,7 @@ import speedLimiter from 'express-slow-down' // Speed limiter
 
 export const rateLimitMiddleware = rateLimiter({
     windowMs: 60 * 1000, // 1 minute
-    max: 10
+    max: 100
 })
 
 export const speedLimitMiddleware = speedLimiter({

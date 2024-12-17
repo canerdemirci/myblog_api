@@ -22,18 +22,19 @@ export default class UpdatePostDTO extends CreatePostDTO {
         return [
             body('id')
                 .isString()
-                .notEmpty().withMessage('Id boş bırakılamaz.')
+                .notEmpty().withMessage('Id cannot be empty.')
                 .trim()
                 .escape(),
             body('title')
                 .isString()
-                .notEmpty().withMessage('Makale başlığı boş bırakılamaz.')
-                .isLength({max: 255}).withMessage('Makale başlığı en fazla 250 karakter olabilir.')
+                .notEmpty().withMessage('Article title cannot be empty')
+                .isLength({max: 255}).withMessage('Article title can be 255 character long.')
                 .trim()
                 .escape(),
             body('content')
                 .optional({values: 'falsy'})
-                .isString(),
+                .isString()
+                .trim(),
             body('cover')
                 .optional({values: 'falsy'})
                 .isString()

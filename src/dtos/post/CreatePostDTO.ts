@@ -38,6 +38,7 @@ export default class CreatePostDTO {
                 .escape(),
             body('content')
                 .optional({values: 'falsy'})
+                .trim()
                 .isString(),
             body('cover')
                 .optional({values: 'falsy'})

@@ -20,8 +20,8 @@ export default class CreateTagDTO {
         return [
             body('name')
                 .isString()
-                .notEmpty().withMessage('Etiket adı boş bırakılamaz.')
-                .isLength({max: 100}).withMessage('Etiket adı en fazla 100 karakter olabilir.')
+                .notEmpty().withMessage('Tag name cannot be empty.')
+                .isLength({max: 100}).withMessage('Tag name can be 100 character long.')
                 .trim()
                 .escape(),
         ]

@@ -44,9 +44,16 @@ export default class PostRepository {
      */
     async getPosts() : Promise<PostDTO[]> {
         const posts = await prismaClient.post.findMany({
-            include: { tags: true },
+            include: {
+                tags: true,
+                _count: {
+                    select: {
+                        comments: true
+                    }
+                }
+            },
             orderBy: {
-                updatedAt: 'desc'
+                createdAt: 'desc'
             }
         })
 

@@ -95,6 +95,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Post"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -107,6 +109,8 @@ paths:
       summary: "Retrieves all posts"
       description: "Retrieves all posts"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -136,6 +140,8 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdatePost"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "204":
           description: "No Content"
         "400":
@@ -159,6 +165,8 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -186,12 +194,211 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "204":
           description: "No Content"
         "400":
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # /notes -----------------------------------------------------------------------
+  /notes:
+
+    # Create note operation ------------------------------------------------------
+    post:
+      tags:
+        - Notes
+      summary: "Creates a note"
+      description: "Creates a note with content"
+      requestBody:
+        description: "Create note request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNote"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateNote"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/notes/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created note link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+    
+    # Get all notes --------------------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves all notes"
+      description: "Retrieves all notes"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Note"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  
+  # /notes/{id} ------------------------------------------------------------------
+  /notes/{id}:
+
+    # Get note by id operation ---------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves a note by note id"
+      description: "Retrieves a note by note id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Delete a note by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Notes
+      summary: "Deletes a note by given id"
+      description: "Deletes a note by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+    
+  # Add note interaction operation ------------------------------------------------------
+  /notes/interactions:
+    post:
+      tags:
+        - Notes
+      summary: "Creates a note interaction"
+      description: "Creates a note interaction"
+      requestBody:
+        description: "Create note interaction request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoteInteraction"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateNoteInteraction"
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            location:
+              schema:
+                type: string
+              description: "Added note interaction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get note interactions --------------------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves note interactions"
+      description: "Retrieves note interactions"
+      parameters:
+        - in: query
+          name: role
+          required: true
+          description: "Note interaction id"
+          schema:
+            type: string
+        - in: query
+          name: noteId
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+        - in: query
+          name: guestId
+          required: false
+          description: "Guest id"
+          schema:
+            type: string
+        - in: query
+          name: userId
+          required: false
+          description: "User id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/NoteInteraction"
         "500":
           $ref: "#/components/responses/ServerError"
 
@@ -215,6 +422,8 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateTag"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "201":
           description: "Created"
           headers:
@@ -239,6 +448,8 @@ paths:
       summary: "Retrieves all tags"
       description: "Retrieves all tags"
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -268,6 +479,8 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -295,6 +508,8 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "204":
           description: "No Content"
         "400":
@@ -352,7 +567,7 @@ components:
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
-          example: "['Typescript', 'React', 'Vue']"
+          example: ["Typescript", "React", "Vue"]
           required: ["true"]
         shareCount:
           type: number
@@ -388,7 +603,7 @@ components:
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
-          example: "['Typescript', 'React', 'Vue']"
+          example: ["Typescript", "React", "Vue"]
           required: ["true"]
       required:
         - title
@@ -418,7 +633,7 @@ components:
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
-          example: "['Typescript', 'React', 'Vue']"
+          example: ["Typescript", "React", "Vue"]
           required: ["true"]
       required:
         - title
@@ -450,7 +665,108 @@ components:
           example: "First tag name"
       required:
         - name
+    
+    # Note Schemas ---------------------------------------------------------------
+    
+    # CreateNote Model ---------------------------------------------------------------
+    CreateNote:
+      type: object
+      properties:
+        content:
+          type: string
+          description: "The note content"
+      required:
+        - content
       
+    # Note Model ---------------------------------------------------------------
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The note id"
+          example: "000xy00-z000-0ab00-00c"
+        createdAt:
+          type: string
+          description: "Created date of the note"
+          example: "2023-03-14T21:49:57.272Z"
+        updatedAt:
+          type: string
+          description: "Updated date of the note"
+          example: "2023-03-14T21:49:57.272Z"
+        content:
+          type: string
+          description: "The note content"
+          example: "First note content..."
+        shareCount:
+          type: number
+          description: "The note share count"
+          example: 0
+        likeCount:
+          type: number
+          description: "The note share count"
+          example: 0
+        viewCount:
+          type: number
+          description: "The note share count"
+          example: 0
+
+    # CreateNoteInteraction Model ---------------------------------------------------------------
+    CreateNoteInteraction:
+      type: object
+      properties:
+        role:
+          type: string
+          description: "Interaction owner (user or guest)"
+          example: "USER | GUEST"
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        guestId:
+          type: string
+          description: "Guest id from client (localstorage)"
+          example: "ABCx34=#"
+        userId:
+          type: string
+          description: "User id"
+        noteId:
+          type: string
+          description: "Note id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - role
+        - type
+        - noteId
+
+    # NoteInteraction Model ---------------------------------------------------------------
+    NoteInteraction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The note interaction id"
+          example: "000xy00-z000-0ab00-00c"
+        role:
+          type: string
+          description: "Interaction owner (user or guest)"
+          example: "USER | GUEST"
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        guestId:
+          type: string
+          description: "Guest id from client (localstorage)"
+          example: "ABCx34=#"
+        userId:
+          type: string
+          description: "User id"
+        noteId:
+          type: string
+          description: "Note id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+
     # Error Response Model ----------------------------------------------------------
     ErrorResponse:
       type: object
@@ -472,6 +788,10 @@ components:
   responses:
     UnauthorizedError:
       description: API key is missing or invalid
+      content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: "The specified resource was not found"
       content:

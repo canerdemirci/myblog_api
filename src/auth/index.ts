@@ -18,11 +18,24 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
 
     const apiKey = process.env.API_KEY
     const clientApiKey = req.header('x-api-key')
-    const hashedApiKey = crypto.createHash('sha256').update(clientApiKey!).digest('hex')
 
-    if (!apiKey || !clientApiKey || hashedApiKey !== apiKey) {
-        return status401Unauthorized(res).json({ message: 'Unauthorized'})
+    if (!apiKey || !clientApiKey) {
+        return status401Unauthorized(res).json({
+            success: false,
+            message: 'Unauthorized',
+            stack: undefined,
+        })
+    } else {
+        const hashedApiKey = crypto.createHash('sha256').update(clientApiKey).digest('hex')
+
+        if (hashedApiKey !== apiKey) {
+            return status401Unauthorized(res).json({
+                success: false,
+                message: 'Unauthorized',
+                stack: undefined,
+            })
+        }
     }
-
+    
     next()
 }

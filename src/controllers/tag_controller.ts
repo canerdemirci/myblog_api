@@ -1,31 +1,32 @@
 /**
  * @module tagController
  * Get tags, get a tag, create a tag, delete a tag
+ * Sanitizing, Validation and Error handling happens in middlewares and routers.
  */
 
-import { apiUrls } from '../constants'
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
+import { chacher } from '../utils/cacher'
+import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
-import { chacher } from '../utils/cacher'
+
 import CreateTagDTO from '../dtos/tag/CreateTagDTO'
 import TagDTO from '../dtos/tag/TagDTO'
+
 import TagRepository from '../repositories/tag_repository'
 
 const tagRepo = new TagRepository()
 
 /**
- * This handler takes tag name string from request.
- * Creates a DTO
- * Apply filter it
- * Validate it
- * Creates a tag in the database
- * Converts it to js object and sends it as a response with 201 status code
- * with created post location.
- * Errors that may occur:
- *  - 500 Internal server error
- *  - 400 Bad request - Validation error
+ * * Acquires From REQUEST BODY: name
+ * * Creates a Tag with CreateTagDTO
+ * * Converts the Tag to Object
+ * * SENDS: Tag json - 201 Created - With location
+ * 
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 500 Internal server error
  */
 const createTag = asyncHandler(async (req: Request, res: Response) => {
     const { name } : { name: string } = req.body
@@ -36,10 +37,10 @@ const createTag = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * This handler fetchs all tags in the database and
- * sends them as a response with 200 status code with array of tag objects
- * Errors that may occur:
- *  - 500 Internal server error
+ * * Fetches all tags from database or chache
+ * * SENDS: Tag[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
  */
 const getTags = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'tags'
@@ -56,12 +57,13 @@ const getTags = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * This handler fetchs a post by id then sends it as a response
- * with status code 200 with post object.
- * Errors that may occur:
- *  - 500 Internal server error
- *  - 400 Bad request
- *  - 404 Not found
+ * * Acquires from REQUEST PARAMS: id
+ * * Fetches a tag by id from database or chache
+ * * SENDS: Tag json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 404 Not found
+ * @throws 500 Internal server error
  */
 const getTag = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'tag-' + req.params.id
@@ -86,12 +88,13 @@ const getTag = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * This handler deletes a tag by id from database then response
- * 204 No Content.
- * Errors that may occur:
- *  - 500 Internal server error
- *  - 400 Bad Request
- *  - 404 Not Found
+ * * Acquires from REQUEST PARAMS: id
+ * * Deletes a tag from database by id
+ * * SENDS: 204 No Content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 404 Not found
+ * @throws 500 Internal server error
  */
 const deleteTag = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id

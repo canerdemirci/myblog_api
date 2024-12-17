@@ -18,11 +18,15 @@ import YAML from 'yaml' // For creating swagger documentation (swagger content)
 import fs from 'fs' // For reading swagger yaml file
 import path from 'path'
 import multer from 'multer' // For file uploads
-import postRouter from './routes/posts'
 import { apiUrls } from './constants'
 import { status200Ok, status204NoContent } from './controllers/responses'
+import postRouter from './routes/posts'
+import noteRouter from './routes/notes'
 import tagRouter from './routes/tags'
 import basicUid from './utils/basicuid'
+import userRouter from './routes/users'
+import commentRouter from './routes/comments'
+import bookmarkRouter from './routes/bookmarks'
 
 // Load .env file constants and create express app
 dotenv.config()
@@ -113,8 +117,16 @@ app.delete(
 )
 // post router
 app.use(apiUrls.posts, postRouter)
+// note router
+app.use(apiUrls.notes, noteRouter)
 // tag router
 app.use(apiUrls.tags, tagRouter)
+// user router
+app.use(apiUrls.users, userRouter)
+// comment router
+app.use(apiUrls.comments, commentRouter)
+// bookmark router
+app.use(apiUrls.bookmarks, bookmarkRouter)
 // API documentation route
 app.use(apiUrls.docs, swaggerUi.serve, swaggerUi.setup(swaggerDocument as JsonObject))
 // Logging middleware with morgan

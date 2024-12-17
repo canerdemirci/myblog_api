@@ -20,9 +20,10 @@ export default class PostDTO extends CreatePostDTO {
     protected _shareCount: number
     protected _likeCount: number
     protected _viewCount: number
+    protected _commentCount?: number
 
     constructor(id: string, createdAt: Date, updatedAt: Date, title: string, tags: TagDTO[],
-        shareCount: number, likeCount: number, viewCount: number,
+        shareCount: number, likeCount: number, viewCount: number, commentCount?: number,
         content?: string, cover?: string) {
         super(title, content, cover)
 
@@ -33,6 +34,7 @@ export default class PostDTO extends CreatePostDTO {
         this._shareCount = shareCount
         this._likeCount = likeCount
         this._viewCount = viewCount
+        this._commentCount = commentCount
     }
 
     get id() {
@@ -63,6 +65,10 @@ export default class PostDTO extends CreatePostDTO {
         return this._viewCount
     }
 
+    get commentCount() {
+        return this._commentCount
+    }
+
     static validationAndSanitizationSchema() {
         return [param('id').escape()]
     }
@@ -77,6 +83,8 @@ export default class PostDTO extends CreatePostDTO {
             post.shareCount,
             post.likeCount,
             post.viewCount,
+            // comment count
+            post?._count?.comments,
             post.content,
             post.cover,
         )
@@ -93,7 +101,8 @@ export default class PostDTO extends CreatePostDTO {
             tags: this.tags,
             shareCount: this.shareCount,
             likeCount: this.likeCount,
-            viewCount: this.viewCount
+            viewCount: this.viewCount,
+            commentCount: this.commentCount
         }
     }
 }
