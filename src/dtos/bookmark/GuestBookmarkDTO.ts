@@ -41,13 +41,13 @@ export default class GuestBookmarkDTO extends CreateGuestBookmarkDTO {
         return [
             query('postId')
                 .isString()
-                .notEmpty().withMessage('Post id cannot be empty')
                 .trim()
+                .notEmpty().withMessage('Post id cannot be empty')
                 .escape(),
             query('guestId')
                 .isString()
-                .notEmpty().withMessage('Guest id cannot be empty')
                 .trim()
+                .notEmpty().withMessage('Guest id cannot be empty')
                 .escape(),
         ]
     }

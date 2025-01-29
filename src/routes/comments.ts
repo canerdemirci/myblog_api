@@ -10,6 +10,7 @@ import { createComment, deleteComment, getAllComments, getComment, getComments, 
 import CommentDTO from '../dtos/comment/CommentDTO'
 import CreateCommentDTO from '../dtos/comment/CreateCommentDTO'
 import UpdateCommentDTO from '../dtos/comment/UpdateCommentDTO'
+import { authMiddleware } from '../middleware/auth'
 
 const commentRouter: Router = express.Router()
 
@@ -31,18 +32,21 @@ commentRouter.get(
 )
 commentRouter.post(
     '/',
+    authMiddleware,
     CreateCommentDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     createComment
 )
 commentRouter.delete(
     '/:id',
+    authMiddleware,
     CommentDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     deleteComment
 )
 commentRouter.put(
     '/',
+    authMiddleware,
     UpdateCommentDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     updateComment

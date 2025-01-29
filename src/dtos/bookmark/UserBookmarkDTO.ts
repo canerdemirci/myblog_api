@@ -41,13 +41,13 @@ export default class UserBookmarkDTO extends CreateUserBookmarkDTO {
         return [
             query('postId')
                 .isString()
-                .notEmpty().withMessage('Post id cannot be empty')
                 .trim()
+                .notEmpty().withMessage('Post id cannot be empty')
                 .escape(),
             query('userId')
                 .isString()
-                .notEmpty().withMessage('User id cannot be empty')
                 .trim()
+                .notEmpty().withMessage('User id cannot be empty')
                 .escape(),
         ]
     }

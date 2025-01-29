@@ -20,9 +20,9 @@ export default class NoteDTO extends CreateNoteDTO {
     protected _viewCount: number
 
     constructor(id: string, createdAt: Date, updatedAt: Date, content: string,
-        shareCount: number, likeCount: number, viewCount: number)
+        images: string[], shareCount: number, likeCount: number, viewCount: number)
     {
-        super(content)
+        super(content, images)
 
         this._id = id
         this._createdAt = createdAt
@@ -57,7 +57,13 @@ export default class NoteDTO extends CreateNoteDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .trim()
+                .notEmpty()
+                .escape()
+        ]
     }
 
     static fromDB(note: any) : NoteDTO {
@@ -66,6 +72,7 @@ export default class NoteDTO extends CreateNoteDTO {
             note.createdAt,
             note.updatedAt,
             note.content,
+            note.images,
             note.shareCount,
             note.likeCount,
             note.viewCount,
@@ -78,6 +85,7 @@ export default class NoteDTO extends CreateNoteDTO {
             createdAt: dateString(this.createdAt),
             updatedAt: dateString(this.updatedAt),
             content: this.content,
+            images: this.images,
             shareCount: this.shareCount,
             likeCount: this.likeCount,
             viewCount: this.viewCount

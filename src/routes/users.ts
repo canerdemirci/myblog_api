@@ -5,19 +5,35 @@
 
 import express, { Router } from 'express'
 import { validationErrorMiddleware } from '../middleware/error'
-import { createUser, deleteUser, getUser, getUserByEmailAndPassword, getUserByProviderId, getUsers } from '../controllers/user_controller'
+import {
+    createUser,
+    deleteUser,
+    getUser,
+    getUserByEmail,
+    getUserByEmailAndPassword,
+    getUserByProviderId,
+    getUsers,
+    updateUser
+} from '../controllers/user_controller'
 import UserDTO from '../dtos/user/UserDTO'
 import CreateUserDTO from '../dtos/user/CreateUserDTO'
+import UpdateUserDTO from '../dtos/user/UpdateUserDTO'
+import { authMiddleware } from '../middleware/auth'
 
 const userRouter: Router = express.Router()
 
-userRouter.use(validationErrorMiddleware)
 userRouter.get('/', getUsers)
 userRouter.get(
     '/search/:id',
     UserDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     getUser
+)
+userRouter.get(
+    '/search/byemail/:email',
+    UserDTO.validationAndSanitizationSchema4(),
+    validationErrorMiddleware,
+    getUserByEmail
 )
 userRouter.get(
     '/search/byprovider/:providerId',
@@ -37,8 +53,16 @@ userRouter.post(
     validationErrorMiddleware,
     createUser
 )
+userRouter.put(
+    '/',
+    authMiddleware,
+    UpdateUserDTO.validationAndSanitizationSchema(),
+    validationErrorMiddleware,
+    updateUser
+)
 userRouter.delete(
     '/:id',
+    authMiddleware,
     UserDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     deleteUser

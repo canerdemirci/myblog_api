@@ -13,6 +13,7 @@ import {
     getGuestInteractions,
     getNote,
     getNotes,
+    getUnusedImages,
     getUserInteractions,
 } from '../controllers/note_controller'
 import NoteDTO from '../dtos/note/NoteDTO'
@@ -21,6 +22,7 @@ import CreateGuestNoteInteractionDTO from '../dtos/noteInteraction/CreateGuestNo
 import CreateUserNoteInteractionDTO from '../dtos/noteInteraction/CreateUserNoteInteractionDTO'
 import GuestNoteInteractionDTO from '../dtos/noteInteraction/GuestNoteInteractionDTO'
 import UserNoteInteractionDTO from '../dtos/noteInteraction/UserNoteInteractionDTO'
+import { authMiddleware } from '../middleware/auth'
 
 const noteRouter: Router = express.Router()
 
@@ -31,14 +33,20 @@ noteRouter.get(
     validationErrorMiddleware,
     getNote
 )
+noteRouter.get(
+    '/maintenance/unused-images',
+    getUnusedImages
+)
 noteRouter.post(
     '/',
+    authMiddleware,
     CreateNoteDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     createNote
 )
 noteRouter.delete(
     '/:id',
+    authMiddleware,
     NoteDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     deleteNote
@@ -51,6 +59,7 @@ noteRouter.post(
 )
 noteRouter.post(
     '/interactions/user',
+    authMiddleware,
     CreateUserNoteInteractionDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     addUserInteraction

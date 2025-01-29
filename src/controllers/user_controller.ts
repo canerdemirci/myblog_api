@@ -6,11 +6,12 @@
 
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { chacher } from '../utils/cacher'
+import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
 import CreateUserDTO from '../dtos/user/CreateUserDTO'
+import UpdateUserDTO from '../dtos/user/UpdateUserDTO'
 import UserRepository from '../repositories/user_repository'
 import UserDTO from '../dtos/user/UserDTO'
 import crypto from 'crypto'
@@ -48,13 +49,13 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
  */
 const getUsers = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'users'
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const usersData = await userRepo.getUsers()
         const users = usersData.map((u: UserDTO) => u.toObject())
+        cacher.set(chacheKey, users, 300)
         status200Ok(res).json(users)
-        chacher.set(chacheKey, users, 300)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -72,14 +73,33 @@ const getUsers = asyncHandler(async (req: Request, res: Response) => {
 const getUser = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
 
-    if (!id) throw new ApiError(400, 'Bad Request: User id required.')
-
     try {
         const userData = await userRepo.getUser(id)
         const user = userData.toObject()
         status200Ok(res).json(user)
     } catch (err) {
         throw new ApiError(404, 'User not found with given id')
+    }
+})
+
+/**
+ * * Acquires from REQUEST PARAMS: email
+ * * Fetches an user by email from database
+ * * SENDS: Tag json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 404 Not found
+ * @throws 500 Internal server error
+ */
+const getUserByEmail = asyncHandler(async (req: Request, res: Response) => {
+    const email: string = req.params.email
+
+    try {
+        const userData = await userRepo.getUserByEmail(email)
+        const user = userData.toObject()
+        status200Ok(res).json(user)
+    } catch (err) {
+        throw new ApiError(404, 'User not found with given email')
     }
 })
 
@@ -94,8 +114,6 @@ const getUser = asyncHandler(async (req: Request, res: Response) => {
  */
 const getUserByProviderId = asyncHandler(async (req: Request, res: Response) => {
     const providerId: string = req.params.providerId
-
-    if (!providerId) throw new ApiError(400, 'Bad Request: User providerId required.')
 
     try {
         const userData = await userRepo.getUserByProviderId(providerId)
@@ -119,8 +137,8 @@ const getUserByEmailAndPassword = asyncHandler(async (req: Request, res: Respons
     const email: string = req.query.email as string
     const password: string = req.query.password as string
 
-    if (!email || !password) throw new ApiError(400,
-        'Bad Request: User email and password required.')
+    if (!email || !password) throw new ApiError(
+        400, 'Bad Request: User email and password required.')
 
     try {
         const userData = await userRepo.getUserByEmailAndPassword(email, password)
@@ -129,6 +147,22 @@ const getUserByEmailAndPassword = asyncHandler(async (req: Request, res: Respons
     } catch (err) {
         throw new ApiError(404, 'User not found with given email and password')
     }
+})
+
+/**
+ * * Acquires from REQUEST BODY: image, name, id
+ * * Updates user
+ * * SENDS: 204 No content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 404 Not found
+ * @throws 500 Internal server error
+ */
+const updateUser = asyncHandler(async (req: Request, res: Response) => {
+    const { id, image, name } : { id: string, image?: string, name?: string } = req.body
+    const updateUserDTO = new UpdateUserDTO(id, name, image)
+    await userRepo.updateUser(updateUserDTO.id, updateUserDTO.image, updateUserDTO.name)
+    status204NoContent(res)
 })
 
 /**
@@ -143,8 +177,6 @@ const getUserByEmailAndPassword = asyncHandler(async (req: Request, res: Respons
 const deleteUser = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
 
-    if (!id) throw new ApiError(400, 'Bad Request: User id required.')
-
     try {
         await userRepo.deleteUser(id)
         status204NoContent(res)
@@ -157,7 +189,9 @@ export {
     createUser,
     getUsers,
     getUser,
+    getUserByEmail,
     getUserByProviderId,
     getUserByEmailAndPassword,
+    updateUser,
     deleteUser
 }

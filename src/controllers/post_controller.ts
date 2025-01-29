@@ -1,15 +1,17 @@
 /**
  * @module postController
- * Get posts, get a post, create a post, update a post, delete a post.
+ * Get posts, get a post, search post, create a post, update a post, delete a post.
  * Sanitizing, Validation and Error handling happens in middlewares and routers.
  */
 
 import type { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { chacher } from '../utils/cacher'
+import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
+import fs from 'fs'
+import path from 'path'
 
 import CreatePostDTO from '../dtos/post/CreatePostDTO'
 import CreateTagDTO from '../dtos/tag/CreateTagDTO'
@@ -21,6 +23,9 @@ import { InteractionType } from '@prisma/client'
 import PostInteractionRepository from '../repositories/postInteraction_repository'
 import CreateGuestPostInteractionDTO from '../dtos/postInteraction/CreateGuestPostInteractionDTO'
 import CreateUserPostInteractionDTO from '../dtos/postInteraction/CreateUserPostInteractionDTO'
+import PostSearchResultDTO from '../dtos/post/PostSearchResultDTO'
+import RelatedPostDTO from '../dtos/post/RelatedPostDTO'
+import PostOfTagDTO from '../dtos/post/PostOfTagDTO'
 
 const postRepo = new PostRepository()
 const postInteractionRepo = new PostInteractionRepository()
@@ -36,10 +41,24 @@ const postInteractionRepo = new PostInteractionRepository()
  * @throws 500 Internal server error
  */
 const createPost = asyncHandler(async (req: Request, res: Response) => {
-    const { title, content, cover, tags } : 
-        { title: string, content?: string, cover?: string, tags: string[] } = req.body
-    const createPostDTO = 
-        new CreatePostDTO(title, content, cover)
+    const {
+        title,
+        images,
+        content,
+        description,
+        cover,
+        tags
+    } : 
+    {
+        title: string,
+        images: string[],
+        content?: string,
+        description?: string,
+        cover?: string,
+        tags: string[]
+    } = req.body
+
+    const createPostDTO = new CreatePostDTO(title, images, content, description, cover)
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     const post = await postRepo.createPost(createPostDTO, createTagDTOS)
     const postJson = post.toObject()
@@ -47,20 +66,88 @@ const createPost = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Fetches all posts from database or chache
+ * * Fetches all posts with optional tag and limitation from database or chache
  * * SENDS: Post[] json - 200 OK
  * @throws 401 Unauthorized
  * @throws 500 Internal server error
  */
 const getPosts = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'posts'
-    const chacedData = chacher.get(chacheKey)
+    const take = req.query.take as string
+    const skip = req.query.skip as string
+    const tagId = req.query.tagId as string || undefined
+
+    const takeNumber = parseInt(take)
+    const skipNumber = parseInt(skip)
+
+    const chacheKey =
+        (!isNaN(takeNumber) && !isNaN(skipNumber))
+            ? (`posts-${takeNumber}-${skipNumber}` + (!tagId ? '' : `-${tagId}`))
+            : ('posts' + (!tagId ? '' : `-${tagId}`))
+
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
-        const postsData = await postRepo.getPosts()
+        const postsData =
+            (!isNaN(takeNumber) && !isNaN(skipNumber))
+                ? await postRepo.getPosts({ take: takeNumber, skip: skipNumber }, tagId)
+                : await postRepo.getPosts(undefined, tagId)
+                
         const posts = postsData.map((p: PostDTO) => p.toObject())
+        cacher.set(chacheKey, posts, 300)
         status200Ok(res).json(posts)
-        chacher.set(chacheKey, posts, 300)
+    } else {
+        status200Ok(res).json(chacedData)
+    }
+})
+
+/**
+ * * Acquires from REQUEST PARAMS: query
+ * * Fetches post search results from database
+ * * SENDS: Post[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getPostSearchResults = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.params.query as string
+
+    const postsData = await postRepo.getPostSearchResults(query)
+    const posts = postsData.map((p: PostSearchResultDTO) => p.toObject())
+    status200Ok(res).json(posts)
+})
+
+/**
+ * * Acquires from REQUEST BODY: tags
+ * * Fetches related posts by tags from database maximum 6 piece
+ * * SENDS: RelatedPost[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getRelatedPosts = asyncHandler(async (req: Request, res: Response) => {
+    const { tags } : { tags: string[] } = req.body
+
+    const postsData = await postRepo.getRelatedPosts(tags)
+    const posts = postsData.map((p: RelatedPostDTO) => p.toObject())
+    status200Ok(res).json(posts)
+})
+
+/**
+ * * Acquires from REQUEST PARAMS: tag
+ * * Fetches posts that belongs to a tag from database.
+ * * SENDS: PostOfTagDTO[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getPostsOfTag = asyncHandler(async (req: Request, res: Response) => {
+    const tag: string = req.params.tag
+
+    const chacheKey = 'postsoftag-' + tag
+    const chacedData = cacher.get(chacheKey)
+
+    if (!chacedData) {
+        const postsData = await postRepo.getPostsOfTag(tag)
+        const posts = postsData.map((p: PostOfTagDTO) => p.toObject())
+        cacher.set(chacheKey, posts, 300)
+        status200Ok(res).json(posts)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -77,18 +164,16 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
  */
 const getPost = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'post-' + req.params.id
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const id: string = req.params.id
 
-        if (!id) throw new ApiError(400, 'Bad Request: Post id required.')
-
         try {
             const postData = await postRepo.getPost(id)
             const post = postData.toObject()
+            cacher.set(chacheKey, post, 300)
             status200Ok(res).json(post)
-            chacher.set(chacheKey, post, 300)
         } catch (err) {
             throw new ApiError(404, 'Post not found with given id')
         }
@@ -109,14 +194,8 @@ const getPost = asyncHandler(async (req: Request, res: Response) => {
 const deletePost = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
 
-    if (!id) throw new ApiError(400, 'Bad Request: Post id required.')
-
-    try {
-        await postRepo.deletePost(id)
-        status204NoContent(res)
-    } catch (err) {
-        throw new ApiError(404, 'Post not found with given id')
-    }
+    await postRepo.deletePost(id)
+    status204NoContent(res)
 })
 
 /**
@@ -128,9 +207,26 @@ const deletePost = asyncHandler(async (req: Request, res: Response) => {
  * @throws 500 Internal server error
  */
 const updatePost = asyncHandler(async (req: Request, res: Response) => {
-    const { id, title, content, cover, tags } : 
-        { id: string, title: string, content?: string, cover?: string, tags: string[] } = req.body
-    const updatePostDTO = new UpdatePostDTO(id, title, content, cover)
+    const {
+        id,
+        title,
+        images,
+        content,
+        description,
+        cover,
+        tags
+    } : 
+    {
+        id: string,
+        title: string,
+        images: string[],
+        content?: string,
+        description?: string,
+        cover?: string,
+        tags: string[]
+    } = req.body
+
+    const updatePostDTO = new UpdatePostDTO(id, title, images, content, description, cover)
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     await postRepo.updatePost(updatePostDTO, createTagDTOS)
     status204NoContent(res)
@@ -220,14 +316,63 @@ const getUserInteractions = asyncHandler(async (req: Request, res: Response) => 
     status200Ok(res).json(results.map(r => r.toObject()))
 })
 
+/**
+ * * Fetches all unused post covers
+ * * SENDS: string[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getUnusedCovers = asyncHandler(async (req: Request, res: Response) => {
+    const directoryPath = path.join(__dirname, '../../uploads');
+
+    fs.readdir(directoryPath, async function (err, files) {
+        if (err) {
+            throw new ApiError(500, 'Unable to scan directory: ' + err)
+        }
+
+        const coverFileList = files.filter(f => f.startsWith('coverImage-'))
+        const postCoverList = await postRepo.getPostCoversList()
+        const unusedCovers = coverFileList.filter(c => !postCoverList.includes(c))
+        
+        status200Ok(res).json(unusedCovers)
+    })
+})
+
+/**
+ * * Fetches all unused post content images
+ * * SENDS: string[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getUnusedImages = asyncHandler(async (req: Request, res: Response) => {
+    const directoryPath = path.join(__dirname, '../../uploads/images_of_posts');
+
+    fs.readdir(directoryPath, async function (err, files) {
+        if (err) {
+            throw new ApiError(500, 'Unable to scan directory: ' + err)
+        }
+
+        const imageFileList = files.filter(f => f.startsWith('postImages-'))
+        const postImageList = await postRepo.getPostImagesList()
+        const unusedImages = imageFileList.filter(c => !postImageList.includes(c))
+        
+        status200Ok(res).json(unusedImages)
+    })
+})
+
 export {
     createPost,
     getPosts,
+    getPostSearchResults,
+    getRelatedPosts,
+    getPostsOfTag,
     getPost,
     deletePost,
     updatePost,
     addGuestInteraction,
     addUserInteraction,
     getGuestInteractions,
-    getUserInteractions
+    getUserInteractions,
+    getUnusedCovers,
+    getUnusedImages
 }

@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { chacher } from '../utils/cacher'
+import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -44,13 +44,13 @@ const createTag = asyncHandler(async (req: Request, res: Response) => {
  */
 const getTags = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'tags'
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const tagsData = await tagRepo.getTags()
         const tags = tagsData.map((t: TagDTO) => t.toObject())
+        cacher.set(chacheKey, tags, 300)
         status200Ok(res).json(tags)
-        chacher.set(chacheKey, tags, 300)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -67,18 +67,16 @@ const getTags = asyncHandler(async (req: Request, res: Response) => {
  */
 const getTag = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'tag-' + req.params.id
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const id: string = req.params.id
 
-        if (!id) throw new ApiError(400, 'Bad Request: Tag id required.')
-
         try {
             const tagData = await tagRepo.getTag(id)
             const tag = tagData.toObject()
+            cacher.set(chacheKey, tag, 300)
             status200Ok(res).json(tag)
-            chacher.set(chacheKey, tag, 300)
         } catch (err) {
             throw new ApiError(404, 'Tag not found with given id')
         }
@@ -98,8 +96,6 @@ const getTag = asyncHandler(async (req: Request, res: Response) => {
  */
 const deleteTag = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
-
-    if (!id) throw new ApiError(400, 'Bad Request: Tag id required.')
 
     try {
         await tagRepo.deleteTag(id)

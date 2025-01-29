@@ -9,10 +9,10 @@ import { createTag, getTags, getTag, deleteTag }
 import TagDTO from '../dtos/tag/TagDTO'
 import CreateTagDTO from '../dtos/tag/CreateTagDTO'
 import { validationErrorMiddleware } from '../middleware/error'
+import { authMiddleware } from '../middleware/auth'
 
 const tagRouter: Router = express.Router()
 
-tagRouter.use(validationErrorMiddleware)
 tagRouter.get('/', getTags)
 tagRouter.get(
     '/:id',
@@ -22,12 +22,14 @@ tagRouter.get(
 )
 tagRouter.post(
     '/',
+    authMiddleware,
     CreateTagDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     createTag
 )
 tagRouter.delete(
     '/:id',
+    authMiddleware,
     TagDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     deleteTag

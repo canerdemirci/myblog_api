@@ -29,25 +29,31 @@ export default class UserPostInteractionDTO extends CreatePostInteractionDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .trim()
+                .notEmpty()
+                .escape()
+        ]
     }
 
     static validationAndSanitizationSchema2() {
         return [
             query('type')
                 .isString()
-                .notEmpty().withMessage('Type cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Type cannot be empty.')
                 .escape(),
             query('postId')
                 .isString()
-                .notEmpty().withMessage('Post Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Post Id cannot be empty.')
                 .escape(),
             query('userId')
                 .isString()
-                .notEmpty().withMessage('User Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('User Id cannot be empty.')
                 .escape(),
         ]
     }

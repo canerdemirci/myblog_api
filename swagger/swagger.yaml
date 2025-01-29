@@ -3,75 +3,25 @@ info:
   title: "A Rest API for my personal blog app"
   description: "A Rest API for my personal blog app made by NodeJS, Express, TypeScript, PostgreSQL-Prisma"
   version: "1.0.0"
+  contact:
+    name: caner demirci
+    url: 'https://canerdemirciblog.hashnode.dev/'
+    email: caner.demirci@outlook.com
 servers:
   - url: "http://localhost:8000/api"
     description: "Development Server"
+  - url: "http://192.168.1.101:8000/api"
+    description: "Production Server"
 security:
   - ApiKeyAuth: []
-
-# Paths --------------------------------------------------------------------------
 paths:
-  /upload:
-    post:
-      tags:
-        - Uploads
-      summary: Uploads a file
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              maximum: 5
-              properties:
-                "coverImage":
-                    type: string
-                    format: binary
-            encoding:
-              coverImage:
-                contentType: image/png, image/jpeg, image/jpg, image/gif
-      responses:
-        '200':
-          description: File uploaded successfully
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    description: File Error Code (1, 2, 3, or 4)
-                  message:
-                    type: string
-                    description: File Error Message
-  /delete-cover/{fileName}:
-    delete:
-      tags:
-        - Delete cover
-      summary: Deletes a post cover image
-      parameters:
-        - in: path
-          name: fileName
-          required: true
-          description: "File name"
-          schema:
-            type: string
-      responses:
-        '204':
-          description: File deleted successfully
-        "500":
-          $ref: "#/components/responses/ServerError"
-
-  # /posts -----------------------------------------------------------------------
   /posts:
-
     # Create post operation ------------------------------------------------------
     post:
       tags:
         - Posts
       summary: "Creates a post"
-      description: "Creates a post with title and content"
+      description: "Creates a post"
       requestBody:
         description: "Create post request"
         required: true
@@ -82,9 +32,11 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: "#/components/schemas/CreatePost"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
       responses:
         "201":
-          description: "Created"
+          description: "Created status with location header"
           headers:
             location:
               schema:
@@ -106,11 +58,9 @@ paths:
     get:
       tags:
         - Posts
-      summary: "Retrieves all posts"
-      description: "Retrieves all posts"
+      summary: "Retrieves all posts from database or cache"
+      description: "Retrieves all posts by tag and pagination"
       responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -120,15 +70,17 @@ paths:
                 items:
                   type: object
                   $ref: "#/components/schemas/Post"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/ServerError"
-  
-    # Update a post by id operation ----------------------------------------------
+
+    # Update a post operation ----------------------------------------------
     put:
       tags:
         - Posts
-      summary: "Update post by id"
-      description: "Update post title and content"
+      summary: "Update post"
+      description: "Update post"
       requestBody:
         description: "Update post request"
         required: true
@@ -139,6 +91,8 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: "#/components/schemas/UpdatePost"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
@@ -148,9 +102,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/ServerError"
-  # /posts/{id} ------------------------------------------------------------------
-  /posts/{id}:
 
+  /posts/{id}:
     # Get post by id operation ---------------------------------------------------
     get:
       tags:
@@ -193,6 +146,7 @@ paths:
           description: "Post id"
           schema:
             type: string
+        - $ref: "#/components/parameters/x-admin-token"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
@@ -205,54 +159,21 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
-  # /notes -----------------------------------------------------------------------
-  /notes:
-
-    # Create note operation ------------------------------------------------------
-    post:
-      tags:
-        - Notes
-      summary: "Creates a note"
-      description: "Creates a note with content"
-      requestBody:
-        description: "Create note request"
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateNote"
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/CreateNote"
-      responses:
-        "201":
-          description: "Created"
-          headers:
-            location:
-              schema:
-                type: string
-                example: "/notes/8a19bab6-0976-4adb-ad68-c488468f89b7"
-              description: "Created note link"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Note"
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/ServerError"
-    
-    # Get all notes --------------------------------------------------------------
+  /posts/search/{query}:
+    # Get post search results --------------------------------------------------------------
     get:
       tags:
-        - Notes
-      summary: "Retrieves all notes"
-      description: "Retrieves all notes"
+        - Posts
+      summary: "Retrieves search results by query"
+      description: "Retrieves search results by query"
+      parameters:
+        - in: path
+          name: query
+          required: true
+          description: "Search query"
+          schema:
+            type: string
       responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
@@ -261,92 +182,99 @@ paths:
                 type: array
                 items:
                   type: object
-                  $ref: "#/components/schemas/Note"
+                  $ref: "#/components/schemas/PostSearchResult"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/ServerError"
-  
-  # /notes/{id} ------------------------------------------------------------------
-  /notes/{id}:
 
-    # Get note by id operation ---------------------------------------------------
+  /posts/tag/{tag}:
+    # Get posts of a tag --------------------------------------------------------------
     get:
       tags:
-        - Notes
-      summary: "Retrieves a note by note id"
-      description: "Retrieves a note by note id"
+        - Posts
+      summary: "Retrieves posts of a tag"
+      description: "Retrieves posts of a tag"
       parameters:
         - in: path
-          name: id
+          name: tag
           required: true
-          description: "Note id"
+          description: "Tag name"
           schema:
             type: string
       responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
         "200":
           description: "OK"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Note"
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/PostOfTag"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/ServerError"
 
-    # Delete a note by id operation ----------------------------------------------
-    delete:
-      tags:
-        - Notes
-      summary: "Deletes a note by given id"
-      description: "Deletes a note by given id"
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: "Note id"
-          schema:
-            type: string
-      responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "204":
-          description: "No Content"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/ServerError"
-    
-  # Add note interaction operation ------------------------------------------------------
-  /notes/interactions:
+  /posts/related/:
+    # Get related posts --------------------------------------------------------------
     post:
       tags:
-        - Notes
-      summary: "Creates a note interaction"
-      description: "Creates a note interaction"
+        - Posts
+      summary: "Retrieves related posts by tags"
+      description: "Retrieves related posts by tags"
       requestBody:
-        description: "Create note interaction request"
+        description: "Related posts request"
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNoteInteraction"
+              $ref: "#/components/schemas/RelatedPost"
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/CreateNoteInteraction"
+              $ref: "#/components/schemas/RelatedPost"
       responses:
         "200":
           description: "OK"
-          headers:
-            location:
+          content:
+            application/json:
               schema:
-                type: string
-              description: "Added note interaction"
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/RelatedPost"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # Add guest interaction ------------------------------------------------------
+  /posts/interactions/guest:
+    post:
+      tags:
+        - Posts
+      summary: "Creates a post guest interaction"
+      description: "Creates a post guest interaction"
+      requestBody:
+        description: "Create guest interaction request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuestPostInteraction"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateGuestPostInteraction"
+      responses:
+        "200":
+          description: "Successfully created"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "400":
@@ -354,57 +282,163 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
-    # Get note interactions --------------------------------------------------------------
+    # Get guest interaction ------------------------------------------------------
     get:
       tags:
-        - Notes
-      summary: "Retrieves note interactions"
-      description: "Retrieves note interactions"
+        - Posts
+      summary: "Get post guest interactions"
+      description: "Get post guest interactions"
       parameters:
         - in: query
-          name: role
+          name: postId
           required: true
-          description: "Note interaction id"
+          description: "Post id"
           schema:
             type: string
         - in: query
-          name: noteId
+          name: type
           required: true
-          description: "Note id"
+          description: "Interaction type"
           schema:
             type: string
         - in: query
           name: guestId
-          required: false
+          required: true
           description: "Guest id"
           schema:
             type: string
-        - in: query
-          name: userId
-          required: false
-          description: "User id"
-          schema:
-            type: string
       responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "200":
-          description: "OK"
+          description: "Successfully retrieved"
           content:
             application/json:
               schema:
                 type: array
                 items:
                   type: object
-                  $ref: "#/components/schemas/NoteInteraction"
+                  $ref: "#/components/schemas/GuestPostInteraction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # Add user interaction ------------------------------------------------------
+  /posts/interactions/user:
+    post:
+      tags:
+        - Posts
+      summary: "Creates a post user interaction"
+      description: "Creates a post user interaction"
+      requestBody:
+        description: "Create user interaction request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserPostInteraction"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateUserPostInteraction"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "200":
+          description: "Successfully created"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get user interaction ------------------------------------------------------
+    get:
+      tags:
+        - Posts
+      summary: "Get post guest interactions"
+      description: "Get post guest interactions"
+      parameters:
+        - in: query
+          name: postId
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+        - in: query
+          name: type
+          required: true
+          description: "Interaction type"
+          schema:
+            type: string
+        - in: query
+          name: guestId
+          required: true
+          description: "Guest id"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Successfully retrieved"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/UserPostInteraction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # Get unused covers ------------------------------------------------------
+  /posts/maintenance/unused-covers:
+    get:
+      tags:
+        - Posts
+      summary: "Get unused covers"
+      description: "Get unused covers"
+      responses:
+        "200":
+          description: "Successfully retrieved"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # Get unused images ------------------------------------------------------
+  /posts/maintenance/unused-images:
+    get:
+      tags:
+        - Posts
+      summary: "Get unused images"
+      description: "Get unused images"
+      responses:
+        "200":
+          description: "Successfully retrieved"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/ServerError"
 
   # /tags -----------------------------------------------------------------------
   /tags:
-
     # Create tag operation ------------------------------------------------------
     post:
       tags:
@@ -421,6 +455,8 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: "#/components/schemas/CreateTag"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
@@ -440,7 +476,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/ServerError"
-    
+  
     # Get all tags --------------------------------------------------------------
     get:
       tags:
@@ -461,10 +497,8 @@ paths:
                   $ref: "#/components/schemas/Tag"
         "500":
           $ref: "#/components/responses/ServerError"
-  
-  # /tags/{id} ------------------------------------------------------------------
-  /tags/{id}:
 
+  /tags/{id}:
     # Get tag by id operation ---------------------------------------------------
     get:
       tags:
@@ -507,6 +541,7 @@ paths:
           description: "Tag id"
           schema:
             type: string
+        - $ref: "#/components/parameters/x-admin-token"
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
@@ -519,173 +554,1486 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
-# Components ---------------------------------------------------------------------
+  # /notes -----------------------------------------------------------------------
+  /notes:
+    # Create note operation ------------------------------------------------------
+    post:
+      tags:
+        - Notes
+      summary: "Creates a note"
+      description: "Creates a note"
+      requestBody:
+        description: "Create note request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNote"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateNote"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/notes/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created note link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  
+    # Get all notes --------------------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves all notes"
+      description: "Retrieves all notes"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Note"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /notes/{id}:
+    # Get note by id operation ---------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves a note by note id"
+      description: "Retrieves a note by note id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Delete a note by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Notes
+      summary: "Deletes a note by given id"
+      description: "Deletes a note by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # Guest note interactions ------------------------------------------------------
+  /notes/interactions/guest:
+    # Add a guest note interaction operation ------------------------------------------------------
+    post:
+      tags:
+        - Notes
+      summary: "Creates a guest note interaction"
+      description: "Creates a guest note interaction"
+      requestBody:
+        description: "Create a guest note interaction request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuestNoteInteraction"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateGuestNoteInteraction"
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            location:
+              schema:
+                type: string
+              description: "Added a guest note interaction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get guest note interactions --------------------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves guest note interactions"
+      description: "Retrieves guest note interactions"
+      parameters:
+        - in: query
+          name: noteId
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+        - in: query
+          name: guestId
+          required: false
+          description: "Guest id"
+          schema:
+            type: string
+        - in: query
+          name: type
+          required: false
+          description: "Interaction type"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/GuestNoteInteraction"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # User note interactions ------------------------------------------------------
+  /notes/interactions/user:
+    # Add a user note interaction operation ------------------------------------------------------
+    post:
+      tags:
+        - Notes
+      summary: "Creates a user note interaction"
+      description: "Creates a user note interaction"
+      requestBody:
+        description: "Create a user note interaction request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserNoteInteraction"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateUserNoteInteraction"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            location:
+              schema:
+                type: string
+              description: "Added a user note interaction"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get user note interactions --------------------------------------------------------------
+    get:
+      tags:
+        - Notes
+      summary: "Retrieves user note interactions"
+      description: "Retrieves user note interactions"
+      parameters:
+        - in: query
+          name: noteId
+          required: true
+          description: "Note id"
+          schema:
+            type: string
+        - in: query
+          name: userId
+          required: false
+          description: "User id"
+          schema:
+            type: string
+        - in: query
+          name: type
+          required: false
+          description: "Interaction type"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/UserNoteInteraction"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /comments:
+    # Create comment operation ------------------------------------------------------
+    post:
+      tags:
+        - Comments
+      summary: "Creates a comment"
+      description: "Creates a comment"
+      requestBody:
+        description: "Create comment request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateComment"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateComment"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/comments/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created comment link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        
+    put:
+      tags:
+        - Comments
+      summary: "Update comment"
+      description: "Update comment"
+      requestBody:
+        description: "Update comment request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateComment"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UpdateComment"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /comments/all:
+    # Get all comments --------------------------------------------------------------
+    get:
+      tags:
+        - Comments
+      summary: "Retrieves all comments"
+      description: "Retrieves all comments"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Comment"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  
+  /comments/{id}:
+    # Get comment by id operation ---------------------------------------------------
+    get:
+      tags:
+        - Comments
+      summary: "Retrieves a comment by comment id"
+      description: "Retrieves a comment by comment id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Comment id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Delete a comment by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Comments
+      summary: "Deletes a comment by given id"
+      description: "Deletes a comment by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Comment id"
+          schema:
+            type: string
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /comments/bypostid/{postId}:
+    # Get comments by post id operation ---------------------------------------------------
+    get:
+      tags:
+        - Comments
+      summary: "Retrieves comments by post id"
+      description: "Retrieves comments by post id"
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /bookmarks/guest/:
+    # Add a guest bookmark operation ------------------------------------------------------
+    post:
+      tags:
+        - Bookmarks
+      summary: "Creates a guest bookmark"
+      description: "Creates a guest bookmark"
+      requestBody:
+        description: "Create a guest bookmark request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuestBookmark"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateGuestBookmark"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+              description: "Created a guest bookmark"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get guest bookmark --------------------------------------------------------------
+    get:
+      tags:
+        - Bookmarks
+      summary: "Retrieves a guest bookmark"
+      description: "Retrieves a guest bookmark"
+      parameters:
+        - in: query
+          name: guestId
+          required: true
+          description: "Guest id"
+          schema:
+            type: string
+        - in: query
+          name: postId
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/GuestBookmark"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /bookmarks/user/:
+    # Add a user bookmark operation ------------------------------------------------------
+    post:
+      tags:
+        - Bookmarks
+      summary: "Creates a user bookmark"
+      description: "Creates a user bookmark"
+      requestBody:
+        description: "Create a user bookmark request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBookmark"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateUserBookmark"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+              description: "Created a user bookmark"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get user bookmark --------------------------------------------------------------
+    get:
+      tags:
+        - Bookmarks
+      summary: "Retrieves a user bookmark"
+      description: "Retrieves a user bookmark"
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          description: "User id"
+          schema:
+            type: string
+        - in: query
+          name: postId
+          required: true
+          description: "Post id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/UserBookmark"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /bookmarks/guest/{guestId}: 
+    # Get guest bookmarks --------------------------------------------------------------
+    get:
+      tags:
+        - Bookmarks
+      summary: "Retrieves guest bookmarks"
+      description: "Retrieves guest bookmarks"
+      parameters:
+        - in: path
+          name: guestId
+          required: true
+          description: "Guest id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/GuestBookmark"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /bookmarks/user/{userId}: 
+    # Get user bookmarks --------------------------------------------------------------
+    get:
+      tags:
+        - Bookmarks
+      summary: "Retrieves user bookmarks"
+      description: "Retrieves user bookmarks"
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: "User id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/UserBookmark"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /bookmarks/{id}:
+    # Delete a bookmark by id operation ----------------------------------------------
+    delete:
+      tags:
+        - Bookmarks
+      summary: "Deletes a bookmark by given id"
+      description: "Deletes a bookmark by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "Bookmark id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users:
+    # Create user operation ------------------------------------------------------
+    post:
+      tags:
+        - Users
+      summary: "Creates a user"
+      description: "Creates a user"
+      requestBody:
+        description: "Create user request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            location:
+              schema:
+                type: string
+                example: "/users/8a19bab6-0976-4adb-ad68-c488468f89b7"
+              description: "Created user link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    # Get all users --------------------------------------------------------------
+    get:
+      tags:
+        - Users
+      summary: "Retrieves all users"
+      description: "Retrieves all users"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/User"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    put:
+      tags:
+        - Users
+      summary: "Update user"
+      description: "Update user"
+      requestBody:
+        description: "Update user request"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUser"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UpdateUser"
+      parameters:
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users/{id}:
+    delete:
+      tags:
+        - Users
+      summary: "Deletes a user by given id"
+      description: "Deletes a user by given id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "User id"
+          schema:
+            type: string
+        - $ref: "#/components/parameters/x-admin-token"
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "204":
+          description: "No Content"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users/search:
+    get:
+      tags:
+        - Users
+      summary: "Get user by email and password"
+      description: "Get user by email and password"
+      parameters:
+        - in: query
+          name: email
+          required: true
+          description: "Email"
+          schema:
+            type: string
+        - in: query
+          name: password
+          required: true
+          description: "Password"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/User"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users/search/{id}:
+    get:
+      tags:
+        - Users
+      summary: "Get user by id"
+      description: "Get user by id"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: "User id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users/search/byemail/{email}:
+    get:
+      tags:
+        - Users
+      summary: "Get user by email"
+      description: "Get user by email"
+      parameters:
+        - in: path
+          name: email
+          required: true
+          description: "User email"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /users/search/byprovider/{providerId}:
+    get:
+      tags:
+        - Users
+      summary: "Get user by provider id"
+      description: "Get user by provider id"
+      parameters:
+        - in: path
+          name: providerId
+          required: true
+          description: "Provider id"
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /upload:
+    post:
+      tags:
+        - Uploads
+      summary: Uploads a file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              maximum: 5
+              properties:
+                "coverImage":
+                    type: string
+                    format: binary
+            encoding:
+              coverImage:
+                contentType: image/png, image/jpeg, image/jpg, image/gif
+      responses:
+        '200':
+          description: File uploaded successfully
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: File Error Code (1, 2, 3, or 4)
+                  message:
+                    type: string
+                    description: File Error Message
+
+  /upload-post-images:
+    post:
+      tags:
+        - Uploads
+      summary: Uploads a post image
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              maximum: 5
+              properties:
+                "postImages":
+                    type: string
+                    format: binary
+            encoding:
+              coverImage:
+                contentType: image/png, image/jpeg, image/jpg, image/gif
+      responses:
+        '200':
+          description: File uploaded successfully
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: File Error Code (1, 2, 3, or 4)
+                  message:
+                    type: string
+                    description: File Error Message
+
+  /upload-note-images:
+    post:
+      tags:
+        - Uploads
+      summary: Uploads a note image
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              maximum: 5
+              properties:
+                "noteImages":
+                    type: string
+                    format: binary
+            encoding:
+              coverImage:
+                contentType: image/png, image/jpeg, image/jpg, image/gif
+      responses:
+        '200':
+          description: File uploaded successfully
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: File Error Code (1, 2, 3, or 4)
+                  message:
+                    type: string
+                    description: File Error Message
+
+  /upload-user-avatar:
+    post:
+      tags:
+        - Uploads
+      summary: Uploads a user avatar
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              maximum: 5
+              properties:
+                "userAvatar":
+                    type: string
+                    format: binary
+            encoding:
+              coverImage:
+                contentType: image/png, image/jpeg, image/jpg, image/gif
+      responses:
+        '200':
+          description: File uploaded successfully
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: File Error Code (1, 2, 3, or 4)
+                  message:
+                    type: string
+                    description: File Error Message
+
+  /delete-cover/{fileName}:
+    delete:
+      tags:
+        - Delete file
+      summary: Deletes a post cover image
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /delete-postimage/{fileName}:
+    delete:
+      tags:
+        - Delete file
+      summary: Deletes a post image
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /delete-noteimage/{fileName}:
+    delete:
+      tags:
+        - Delete file
+      summary: Deletes a post image
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /delete-useravatar/{fileName}:
+    delete:
+      tags:
+        - Delete file
+      summary: Deletes a post image
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /static/{fileName}:
+    get:
+      tags:
+        - Static
+      summary: "Get post cover image"
+      description: "Get post cover image"
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "File served successfully"
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /static/images_of_posts/{fileName}:
+    get:
+      tags:
+        - Static
+      summary: "Get post content image"
+      description: "Get post content image"
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "File served successfully"
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /static/images_of_notes/{fileName}:
+    get:
+      tags:
+        - Static
+      summary: "Get note content image"
+      description: "Get note content image"
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "File served successfully"
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /static/user_avatars/{fileName}:
+    get:
+      tags:
+        - Static
+      summary: "Get user avatar"
+      description: "Get user avatar"
+      parameters:
+        - in: path
+          name: fileName
+          required: true
+          description: "File name"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "File served successfully"
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
 components:
+  parameters:
+    x-admin-token:
+        in: header
+        name: x-admin
+        required: true
+        description: "Admin token"
+        schema:
+          type: string
+    x-api-key:
+      in: header
+      name: x-api-key
+      required: true
+      description: "Api key"
+      schema:
+        type: string
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-KEY
-  
-  # Schemas ----------------------------------------------------------------------
   schemas:
-    
     # Post Schemas ---------------------------------------------------------------
-
-    # Post Model -----------------------------------------------------------------
     Post:
       type: object
       properties:
         id:
           type: string
           description: "The post id"
-          example: "000xy00-z000-0ab00-00c"
         createdAt:
           type: string
           description: "Created date of the post"
-          example: "2023-03-14T21:49:57.272Z"
         updatedAt:
           type: string
           description: "Updated date of the post"
-          example: "2023-03-14T21:49:57.272Z"
         title:
           type: string
           description: "The post title"
-          example: "First Post Title"
         content:
           type: string
           description: "The post content"
-          example: "First post content..."
-          required: ["false"]
         cover:
           type: string
           description: "The post cover"
-          example: "First post cover..."
-          required: ["false"]
         tags:
           type: array
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
           example: ["Typescript", "React", "Vue"]
-          required: ["true"]
         shareCount:
           type: number
           description: "The post share count"
-          example: 0
         likeCount:
           type: number
           description: "The post share count"
-          example: 0
         viewCount:
           type: number
           description: "The post share count"
-          example: 0
-    
-    # Create Post Model ------------------------------------------------------------
+        commentCount:
+          type: number
+          description: "The post comment count"
+      required:
+        - id
+        - title
+        - tags
+        - createdAt
+        - updatedAt
+        - shareCount
+        - likeCount
+        - viewCount
+
     CreatePost:
       type: object
       properties:
         title:
           type: string
           description: "The post title"
-          example: "First Post Title"
+        images:
+          type: array
+          items:
+            type: string
+          description: "The post content images. Can be empty array"
+          example: ["url/image1.jpg", "url/image2.jpg"]
         content:
           type: string
           description: "The post content"
-          example: "First post content..."
+        description:
+          type: string
+          description: "The post description for seo"
         cover:
           type: string
-          description: "The post cover"
-          example: "First post cover..."
+          description: "The post cover image"
+          example: "cover.jpg"
         tags:
           type: array
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
           example: ["Typescript", "React", "Vue"]
-          required: ["true"]
       required:
         - title
+        - images
         - tags
 
-    # Update Post Model ------------------------------------------------------------
+    CreateGuestPostInteraction:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        guestId:
+          type: string
+          description: "Guest id"
+          example: "ABCx34=#"
+        postId:
+          type: string
+          description: "Post id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - type
+        - postId
+        - guestId
+
+    CreateUserPostInteraction:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        userId:
+          type: string
+          description: "User id"
+          example: "ABCx34=#"
+        postId:
+          type: string
+          description: "Post id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - type
+        - postId
+        - userId
+
     UpdatePost:
       type: object
       properties:
         id:
           type: string
-          example: "000xy00-z000-0ab00-00c"
+          description: "The post id"
         title:
           type: string
           description: "The post title"
-          example: "First Post Title"
+        images:
+          type: array
+          items:
+            type: string
+          description: "The post content images. Can be empty array"
+          example: ["url/image1.jpg", "url/image2.jpg"]
         content:
           type: string
           description: "The post content"
-          example: "First post content..."
+        description:
+          type: string
+          description: "The post description for seo"
         cover:
           type: string
-          description: "The post cover"
-          example: "First post cover..."
+          description: "The post cover image"
         tags:
           type: array
           items:
             $ref: "#/components/schemas/Tag"
           description: "The post tags"
           example: ["Typescript", "React", "Vue"]
-          required: ["true"]
       required:
-        - title
         - id
+        - title
+        - images
         - tags
 
-    # Tag Schemas ---------------------------------------------------------------
+    PostSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The post id"
+        title:
+          type: string
+          description: "The post title"
+      required:
+        - id
+        - title
 
-    # Tag Model -----------------------------------------------------------------
+    RelatedPost:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The post id"
+        createdAt:
+          type: string
+          description: "Created date of the post"
+        title:
+          type: string
+          description: "The post title"
+        cover:
+          type: string
+          description: "The post cover"
+      required:
+        - id
+        - title
+        - createdAt
+
+    PostOfTag:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The post id"
+        createdAt:
+          type: string
+          description: "Created date of the post"
+        title:
+          type: string
+          description: "The post title"
+        cover:
+          type: string
+          description: "The post cover"
+      required:
+        - id
+        - title
+        - createdAt
+
+    # Tag Schemas ---------------------------------------------------------------
     Tag:
       type: object
       properties:
         id:
           type: string
           description: "The tag id"
-          example: "000xy00-z000-0ab00-00c"
         name:
           type: string
           description: "The tag name"
-          example: "First Tag Name"
-    
-    # Create Tag Model ------------------------------------------------------------
+        postCount:
+          type: number
+          description: "The tag post count"
+      required:
+        - id
+        - name
+        - postCount
+
     CreateTag:
       type: object
       properties:
         name:
           type: string
           description: "The tag name"
-          example: "First tag name"
       required:
         - name
-    
+
     # Note Schemas ---------------------------------------------------------------
-    
-    # CreateNote Model ---------------------------------------------------------------
     CreateNote:
       type: object
       properties:
         content:
           type: string
           description: "The note content"
+        images:
+          type: array
+          items:
+            type: string
+          description: "The note content images. Can be empty array"
+          example: ["url/image1.jpg", "url/image2.jpg"]
       required:
         - content
+        - images
       
-    # Note Model ---------------------------------------------------------------
     Note:
       type: object
       properties:
         id:
           type: string
           description: "The note id"
-          example: "000xy00-z000-0ab00-00c"
         createdAt:
           type: string
           description: "Created date of the note"
@@ -697,28 +2045,81 @@ components:
         content:
           type: string
           description: "The note content"
-          example: "First note content..."
+        images:
+          type: array
+          items:
+            type: string
+          description: "The note content images. Can be empty array"
+          example: ["url/image1.jpg", "url/image2.jpg"]
         shareCount:
           type: number
           description: "The note share count"
-          example: 0
         likeCount:
           type: number
           description: "The note share count"
-          example: 0
         viewCount:
           type: number
           description: "The note share count"
-          example: 0
+      required:
+        - id
+        - content
+        - images
+        - createdAt
+        - updatedAt
+        - shareCount
+        - likeCount
+        - viewCount
 
-    # CreateNoteInteraction Model ---------------------------------------------------------------
-    CreateNoteInteraction:
+    # Note interaction schemas ---------------------------------------------------------------
+    CreateGuestNoteInteraction:
       type: object
       properties:
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        guestId:
+          type: string
+          description: "Guest id from client (localstorage) required if role is GUEST"
+          example: "ABCx34=#"
+        noteId:
+          type: string
+          description: "Note id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - type
+        - noteId
+        - guestId
+
+    CreateUserNoteInteraction:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        userId:
+          type: string
+          description: "User id (required if role is USER)"
+        noteId:
+          type: string
+          description: "Note id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - type
+        - noteId
+        - userId
+
+    GuestNoteInteraction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The guest note interaction id"
         role:
           type: string
-          description: "Interaction owner (user or guest)"
-          example: "USER | GUEST"
+          description: "Interaction owner (guest)"
+          example: "GUEST"
         type:
           type: string
           description: "Interaction type"
@@ -727,6 +2128,31 @@ components:
           type: string
           description: "Guest id from client (localstorage)"
           example: "ABCx34=#"
+        noteId:
+          type: string
+          description: "Note id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - id
+        - role
+        - type
+        - guestId
+        - noteId
+
+    UserNoteInteraction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The guest note interaction id"
+        role:
+          type: string
+          description: "Interaction owner (user)"
+          example: "USER"
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
         userId:
           type: string
           description: "User id"
@@ -735,78 +2161,306 @@ components:
           description: "Note id"
           example: "2387234-iealmkiea-234834-ieailemak"
       required:
+        - id
         - role
         - type
+        - userId
         - noteId
 
-    # NoteInteraction Model ---------------------------------------------------------------
-    NoteInteraction:
+    UserPostInteraction:
       type: object
       properties:
         id:
           type: string
-          description: "The note interaction id"
-          example: "000xy00-z000-0ab00-00c"
+          description: "The user post interaction id"
         role:
           type: string
-          description: "Interaction owner (user or guest)"
-          example: "USER | GUEST"
+          description: "Interaction owner (user)"
+          example: "USER"
+        type:
+          type: string
+          description: "Interaction type"
+          example: "LIKE | UNLIKE | VIEW | SHARE"
+        userId:
+          type: string
+          description: "User id"
+        postId:
+          type: string
+          description: "Post id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - id
+        - role
+        - type
+        - userId
+        - postId
+
+    GuestPostInteraction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The guest post interaction id"
+        role:
+          type: string
+          description: "Interaction owner (guest)"
+          example: "GUEST"
         type:
           type: string
           description: "Interaction type"
           example: "LIKE | UNLIKE | VIEW | SHARE"
         guestId:
           type: string
-          description: "Guest id from client (localstorage)"
-          example: "ABCx34=#"
+          description: "Guest id"
+        postId:
+          type: string
+          description: "Post id"
+          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - id
+        - role
+        - type
+        - guestId
+        - postId
+    
+    # Comment Schemas ---------------------------------------------------------------
+    CreateComment:
+      type: object
+      properties:
+        text:
+          type: string
+          description: "The comment text"
+        postId:
+          type: string
+          description: "The post id"
         userId:
           type: string
           description: "User id"
-        noteId:
-          type: string
-          description: "Note id"
-          example: "2387234-iealmkiea-234834-ieailemak"
+      required:
+        - text
+        - postId
+        - userId
 
-    # Error Response Model ----------------------------------------------------------
+    UpdateComment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The comment id"
+        text:
+          type: string
+          description: "The comment text"
+      required:
+        - id
+        - text
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The comment id"
+        createdAt:
+          type: string
+          description: "Created date of the comment"
+          example: "2023-03-14T21:49:57.272Z"
+        updatedAt:
+          type: string
+          description: "Updated date of the comment"
+          example: "2023-03-14T21:49:57.272Z"
+        text:
+          type: string
+          description: "The comment text"
+        postId:
+          type: string
+          description: "The post id"
+        userId:
+          type: string
+          description: "User id"
+      required:
+        - text
+        - createdAt
+        - updatedAt
+        - postId
+        - userId
+
+    # Bookmark Schemas ---------------------------------------------------------------
+    CreateGuestBookmark:
+      type: object
+      properties:
+        postId:
+          type: string
+          description: "The post id"
+        guestId:
+          type: string
+          description: "Guest id"
+      required:
+        - postId
+        - guestId
+
+    CreateUserBookmark:
+      type: object
+      properties:
+        postId:
+          type: string
+          description: "The post id"
+        userId:
+          type: string
+          description: "User id"
+      required:
+        - postId
+        - userId
+
+    GuestBookmark:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The bookmark id"
+        postId:
+          type: string
+          description: "Post id"
+        guestId:
+          type: string
+          description: "Guest id"
+      required:
+        - id
+        - postId
+        - guestId
+
+    UserBookmark:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The bookmark id"
+        postId:
+          type: string
+          description: "Post id"
+        userId:
+          type: string
+          description: "User id"
+      required:
+        - id
+        - postId
+        - userId
+
+    # User Schemas ---------------------------------------------------------------
+    CreateUser:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The user name"
+        email:
+          type: string
+          description: "The user email"
+        image:
+          type: string
+          description: "The user image"
+        password:
+          type: string
+          description: "The user password"
+        provider:
+          type: string
+          description: "The user provider"
+          example: "google"
+        providerId:
+          type: string
+          description: "The user provider id"
+      required:
+        - email
+
+    UpdateUser:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The user id"
+        name:
+          type: string
+          description: "The user name"
+        image:
+          type: string
+          description: "The user image"
+      required:
+        - id
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The user id"
+        name:
+          type: string
+          description: "The user name"
+        email:
+          type: string
+          description: "The user email"
+        image:
+          type: string
+          description: "The user image"
+        provider:
+          type: string
+          description: "The user provider"
+          example: "google"
+        providerId:
+          type: string
+          description: "The user provider id"
+        createdAt:
+          type: string
+          description: "Created date of the user"
+          example: "2023-03-14T21:49:57.272Z"
+        updatedAt:
+          type: string
+          description: "Updated date of the user"
+          example: "2023-03-14T21:49:57.272Z"
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+
+    # Response Schemas ----------------------------------------------------------------
     ErrorResponse:
       type: object
       properties:
         success:
           type: boolean
-          example: false
         message:
           type: string
-          example: "Internal server error"
         level:
           type: string
-          example: "level"
         timestamp:
           type: string
           example: "2023-03-26 18:37:08:378"
-  
-  # Response Schemas ----------------------------------------------------------------
+      required:
+        - success
+        - message
+
   responses:
     UnauthorizedError:
-      description: API key is missing or invalid
+      description: "API key, admin token or user token is missing or invalid"
       content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: "The specified resource was not found"
       content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     BadRequest:
       description: "Bad request"
       content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     ServerError:
       description: "Internal server error"
       content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

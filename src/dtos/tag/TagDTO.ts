@@ -26,7 +26,13 @@ export default class TagDTO extends CreateTagDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .trim()
+                .notEmpty()
+                .escape()
+        ]
     }
 
     static fromDB(tag: any) : TagDTO {

@@ -5,7 +5,7 @@
 
 import TagDTO from "../tag/TagDTO"
 import CreatePostDTO from "./CreatePostDTO"
-import { param } from 'express-validator'
+import { param, query } from 'express-validator'
 
 function dateString(date: Date) : string {
     const pieces = date.toLocaleDateString().split('/')
@@ -22,10 +22,22 @@ export default class PostDTO extends CreatePostDTO {
     protected _viewCount: number
     protected _commentCount?: number
 
-    constructor(id: string, createdAt: Date, updatedAt: Date, title: string, tags: TagDTO[],
-        shareCount: number, likeCount: number, viewCount: number, commentCount?: number,
-        content?: string, cover?: string) {
-        super(title, content, cover)
+    constructor(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        title: string,
+        images: string[],
+        tags: TagDTO[],
+        shareCount: number,
+        likeCount: number,
+        viewCount: number,
+        commentCount?: number,
+        content?: string,
+        description?: string,
+        cover?: string)
+    {
+        super(title, images, content, description, cover)
 
         this._id = id
         this._createdAt = createdAt
@@ -70,7 +82,33 @@ export default class PostDTO extends CreatePostDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .trim()
+                .notEmpty()
+                .withMessage('Post id is required').escape()
+        ]
+    }
+
+    static validationAndSanitizationSchema2() {
+        return [
+            query('take')
+                .isString()
+                .optional()
+                .trim()
+                .escape(),
+            query('skip')
+                .isString()
+                .optional()
+                .trim()
+                .escape(),
+            query('tagId')
+                .isString()
+                .optional()
+                .trim()
+                .escape(),
+        ]
     }
 
     static fromDB(post: any) : PostDTO {
@@ -79,6 +117,7 @@ export default class PostDTO extends CreatePostDTO {
             post.createdAt,
             post.updatedAt,
             post.title,
+            post.images,
             post.tags,
             post.shareCount,
             post.likeCount,
@@ -86,6 +125,7 @@ export default class PostDTO extends CreatePostDTO {
             // comment count
             post?._count?.comments,
             post.content,
+            post.description,
             post.cover,
         )
     }
@@ -96,7 +136,9 @@ export default class PostDTO extends CreatePostDTO {
             createdAt: dateString(this.createdAt),
             updatedAt: dateString(this.updatedAt),
             title: this.title,
+            images: this.images,
             content: this.content,
+            description: this.description,
             cover: this.cover,
             tags: this.tags,
             shareCount: this.shareCount,

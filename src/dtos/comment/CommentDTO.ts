@@ -53,15 +53,21 @@ export default class CommentDTO extends CreateCommentDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .trim()
+                .notEmpty().withMessage('Id cannot be empty')
+                .escape(),
+        ]
     }
 
     static validationAndSanitizationSchema2() {
         return [
             param('postId')
                 .isString()
-                .notEmpty().withMessage('Post id cannot be empty')
                 .trim()
+                .notEmpty().withMessage('Post id cannot be empty')
                 .escape(),
         ]
     }

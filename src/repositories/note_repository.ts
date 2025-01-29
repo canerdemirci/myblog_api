@@ -16,7 +16,7 @@ export default class NoteRepository {
      */
     async createNote(createNoteDTO: CreateNoteDTO) : Promise<NoteDTO> {
         const note = await prismaClient.note.create({
-            data: { content: createNoteDTO.content }
+            data: { content: createNoteDTO.content, images: createNoteDTO.images }
         })
 
         return NoteDTO.fromDB(note)
@@ -57,5 +57,25 @@ export default class NoteRepository {
      */
     async deleteNote(id: string) : Promise<void> {
         await prismaClient.note.delete({ where: { id: id } })
+    }
+
+    /**
+     * This function fetchs all note content images
+     * If an error occurs it throws.
+     * @returns Promise < string[] >
+     */
+    async getNoteImagesList() : Promise<string[]> {
+        const images = await prismaClient.note.findMany({
+            select: {
+                images: true
+            },
+            where: {
+                images: {
+                    isEmpty: false
+                }
+            }
+        })
+
+        return images.flatMap(i => i.images)
     }
 }

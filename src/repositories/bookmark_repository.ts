@@ -57,7 +57,14 @@ export default class BookmarkRepository {
      */
     async getUserBookmarks(userId: string): Promise<UserBookmarkDTO[]> {
         const bookmarks = await prismaClient.bookmark.findMany({
-            include: { post: true },
+            include: {
+                post: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            },
             where: {
                 userId: userId,
             },
@@ -73,7 +80,14 @@ export default class BookmarkRepository {
      */
     async getGuestBookmarks(guestId: string): Promise<GuestBookmarkDTO[]> {
         const bookmarks = await prismaClient.bookmark.findMany({
-            include: { post: true },
+            include: {
+                post: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            },
             where: {
                 guestId: guestId,
             },

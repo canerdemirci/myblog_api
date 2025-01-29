@@ -29,7 +29,9 @@ model Post {
   updatedAt DateTime @updatedAt
   title String @db.VarChar(255)
   content String?
+  description String? @db.VarChar(160)
   cover String? @db.VarChar(255)
+  images String[]
   tags Tag[]
   shareCount Int @default(0)
   likeCount Int @default(0)
@@ -50,6 +52,7 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   content String
+  images String[]
   shareCount Int @default(0)
   likeCount Int @default(0)
   viewCount Int @default(0)
@@ -62,7 +65,7 @@ model PostInteraction {
   guestId String?
   userId String?
   type InteractionType
-  post Post @relation(fields: [postId], references: [id])
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   postId String
 }
 
@@ -72,7 +75,7 @@ model NoteInteraction {
   guestId String?
   userId String?
   type InteractionType
-  note Note @relation(fields: [noteId], references: [id])
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   noteId String
 }
 
@@ -98,8 +101,8 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
-  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Bookmark {
@@ -109,6 +112,6 @@ model Bookmark {
   userId String?
   guestId String?
 
-  user User? @relation(fields: [userId], references: [id])
-  post Post @relation(fields: [postId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

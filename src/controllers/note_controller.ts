@@ -6,10 +6,12 @@
 
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { chacher } from '../utils/cacher'
+import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
+import path from 'path'
+import fs from 'fs'
 import { InteractionType } from '@prisma/client'
 
 import CreateNoteDTO from '../dtos/note/CreateNoteDTO'
@@ -34,8 +36,8 @@ const noteInteractionRepo = new NoteInteractionRepository()
  * @throws 500 Internal server error
  */
 const createNote = asyncHandler(async (req: Request, res: Response) => {
-    const { content } : { content: string } = req.body
-    const createNoteDTO = new CreateNoteDTO(content)
+    const { content, images } : { content: string, images: string[] } = req.body
+    const createNoteDTO = new CreateNoteDTO(content, images)
     const note = await noteRepo.createNote(createNoteDTO)
     const noteJson = note.toObject()
     status201CreatedWithLocation(res, `${apiUrls.notes}/${noteJson.id}`).json(noteJson)
@@ -49,13 +51,13 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
  */
 const getNotes = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'notes'
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const notesData = await noteRepo.getNotes()
         const notes = notesData.map((n: NoteDTO) => n.toObject())
+        cacher.set(chacheKey, notes, 300)
         status200Ok(res).json(notes)
-        chacher.set(chacheKey, notes, 300)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -72,18 +74,16 @@ const getNotes = asyncHandler(async (req: Request, res: Response) => {
  */
 const getNote = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'note-' + req.params.id
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const id: string = req.params.id
 
-        if (!id) throw new ApiError(400, 'Bad Request: Note id required.')
-
         try {
             const noteData = await noteRepo.getNote(id)
             const note = noteData.toObject()
+            cacher.set(chacheKey, note, 300)
             status200Ok(res).json(note)
-            chacher.set(chacheKey, note, 300)
         } catch (err) {
             throw new ApiError(404, 'Note not found with given id')
         }
@@ -103,8 +103,6 @@ const getNote = asyncHandler(async (req: Request, res: Response) => {
  */
 const deleteNote = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
-
-    if (!id) throw new ApiError(400, 'Bad Request: Note id required.')
 
     try {
         await noteRepo.deleteNote(id)
@@ -198,6 +196,28 @@ const getUserInteractions = asyncHandler(async (req: Request, res: Response) => 
     status200Ok(res).json(results.map(r => r.toObject()))
 })
 
+/**
+ * * Fetches all unused note content images
+ * * SENDS: string[] json - 200 OK
+ * @throws 401 Unauthorized
+ * @throws 500 Internal server error
+ */
+const getUnusedImages = asyncHandler(async (req: Request, res: Response) => {
+    const directoryPath = path.join(__dirname, '../../uploads/images_of_notes');
+
+    fs.readdir(directoryPath, async function (err, files) {
+        if (err) {
+            throw new ApiError(500, 'Unable to scan directory: ' + err)
+        }
+
+        const imageFileList = files.filter(f => f.startsWith('noteImages-'))
+        const noteImageList = await noteRepo.getNoteImagesList()
+        const unusedImages = imageFileList.filter(c => !noteImageList.includes(c))
+        
+        status200Ok(res).json(unusedImages)
+    })
+})
+
 export {
     createNote,
     getNotes,
@@ -206,5 +226,6 @@ export {
     addGuestInteraction,
     addUserInteraction,
     getGuestInteractions,
-    getUserInteractions
+    getUserInteractions,
+    getUnusedImages
 }

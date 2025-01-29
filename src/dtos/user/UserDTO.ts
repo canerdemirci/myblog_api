@@ -13,9 +13,9 @@ export default class UserDTO extends CreateUserDTO {
 
     constructor(
         id: string, email: string, createdAt: Date, updatedAt: Date,
-        name?: string, image?: string, password?: string, provider?: string, providerId?: string
+        name?: string, image?: string, provider?: string, providerId?: string
     ) {
-        super(email, name, image, password, provider, providerId)
+        super(email, name, image, undefined, provider, providerId)
 
         this._id = id
         this._createdAt = createdAt
@@ -35,24 +35,46 @@ export default class UserDTO extends CreateUserDTO {
     }
 
     static validationAndSanitizationSchema() {
-        return [param('id').escape()]
+        return [
+            param('id')
+                .isString()
+                .notEmpty().withMessage('Id cannot be empty.')
+                .trim()
+                .escape()
+        ]
+    }
+
+    static validationAndSanitizationSchema4() {
+        return [
+            param('email')
+                .isString()
+                .notEmpty().withMessage('Email cannot be empty.')
+                .trim()
+                .escape()
+        ]
     }
 
     static validationAndSanitizationSchema3() {
-        return [param('providerId').escape()]
+        return [
+            param('providerId')
+                .isString()
+                .notEmpty().withMessage('Provider id cannot be empty.')
+                .trim()
+                .escape()
+        ]
     }
 
     static validationAndSanitizationSchema2() {
         return [
             query('email')
                 .isString()
-                .notEmpty().withMessage('Email cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Email cannot be empty.')
                 .escape(),
             query('password')
                 .isString()
-                .notEmpty().withMessage('Password cannot be empty')
                 .trim()
+                .notEmpty().withMessage('Password cannot be empty')
                 .escape(),
         ]
     }
@@ -65,7 +87,6 @@ export default class UserDTO extends CreateUserDTO {
             user.updatedAt,
             user.name,
             user.image,
-            user.password,
             user.provider,
             user.providerId
         )
@@ -79,7 +100,6 @@ export default class UserDTO extends CreateUserDTO {
             updatedAt: this.updatedAt,
             name: this.name,
             image: this.image,
-            password: this.password,
             provider: this.provider,
             providerId: this.providerId
         }

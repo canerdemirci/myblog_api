@@ -21,7 +21,16 @@ export default class CommentRepository {
                 text: createCommentDTO.text,
                 postId: createCommentDTO.postId,
                 userId: createCommentDTO.userId,
-            }
+            },
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        name: true,
+                        image: true
+                    }
+                }
+            },
         })
 
         return CommentDTO.fromDB(comment)
@@ -70,6 +79,11 @@ export default class CommentRepository {
                         email: true,
                         name: true,
                         image: true
+                    }
+                },
+                post: {
+                    select: {
+                        title: true
                     }
                 }
             },

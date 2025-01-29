@@ -3,19 +3,23 @@
  * Used to update comment in database.
  */
 
-import CreateCommentDTO from "./CreateCommentDTO"
 import { body } from 'express-validator'
 
-export default class UpdateCommentDTO extends CreateCommentDTO {
+export default class UpdateCommentDTO {
     protected _id: string
+    protected _text: string
 
-    constructor(id: string, text: string, postId: string, userId: string) {
-        super(text, postId, userId)
+    constructor(id: string, text: string) {
         this._id = id
+        this._text = text
     }
 
     get id() {
         return this._id
+    }
+
+    get text() {
+        return this._text
     }
 
     static validationAndSanitizationSchema() {
@@ -31,16 +35,6 @@ export default class UpdateCommentDTO extends CreateCommentDTO {
                 .isLength({max: 500, min: 5}).withMessage('Comment text can be 500 character long.')
                 .trim()
                 .escape(),
-            body('postId')
-                .isString()
-                .notEmpty().withMessage('Post id is required.')
-                .trim()
-                .escape(),
-            body('userId')
-                .isString()
-                .notEmpty().withMessage('User id is required')
-                .trim()
-                .escape()
         ]
     }
 }

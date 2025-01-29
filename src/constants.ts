@@ -9,5 +9,11 @@ export const apiUrls = {
     docs: '/api-docs',
     static: '/api/static',
     upload: '/api/upload',
+    uploadPostImages: '/api/upload-post-images',
+    uploadNoteImages: '/api/upload-note-images',
+    uploadUserAvatar: '/api/upload-user-avatar',
     deleteCover: '/api/delete-cover/:fileName',
+    deletePostImage: '/api/delete-postimage/:fileName',
+    deleteNoteImage: '/api/delete-noteimage/:fileName',
+    deleteUserAvatar: '/api/delete-useravatar/:fileName',
 }

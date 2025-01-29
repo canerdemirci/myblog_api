@@ -60,6 +60,21 @@ export default class UserRepository {
     }
 
     /**
+     * This function fetchs an user by email from database.
+     * Then returns it as a UserDTO.
+     * If an error occurs it throws.
+     * @param email string
+     * @returns Promise < UserDTO >
+     */
+    async getUserByEmail(email: string) : Promise<UserDTO> {
+        const user = await prismaClient.user.findFirstOrThrow({
+            where: { email: email },
+        })
+        
+        return UserDTO.fromDB(user)
+    }
+
+    /**
      * This function fetchs an user by providerId from database.
      * Then returns it as a UserDTO.
      * If an error occurs it throws.
@@ -88,6 +103,27 @@ export default class UserRepository {
         })
         
         return UserDTO.fromDB(user)
+    }
+
+    /**
+     * This function updates user data by id.
+     * @param id string
+     * @param image string
+     * @param name string
+     * @returns Promise < void >
+     */
+    async updateUser(id: string, image?: string, name?: string) : Promise<void> {
+        if (!image && !name) return
+
+        await prismaClient.user.update({
+            where: {
+                id: id
+            },
+            data: {
+                image: image,
+                name: name
+            }
+        })
     }
 
     /**

@@ -6,7 +6,7 @@
 
 import type { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { chacher } from '../utils/cacher'
+import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -48,13 +48,13 @@ const getComments = asyncHandler(async (req: Request, res: Response) => {
     const postId = req.params.postId as string
     
     const chacheKey = 'comments-' + postId
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const commentsData = await commentRepo.getComments(postId)
         const comments = commentsData.map((c: CommentDTO) => c.toObject())
         status200Ok(res).json(comments)
-        chacher.set(chacheKey, comments, 300)
+        cacher.set(chacheKey, comments, 300)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -68,13 +68,13 @@ const getComments = asyncHandler(async (req: Request, res: Response) => {
  */
 const getAllComments = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'all_comments'
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const commentsData = await commentRepo.getAllComments()
         const comments = commentsData.map((c: CommentDTO) => c.toObject())
+        cacher.set(chacheKey, comments, 300)
         status200Ok(res).json(comments)
-        chacher.set(chacheKey, comments, 300)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -91,18 +91,16 @@ const getAllComments = asyncHandler(async (req: Request, res: Response) => {
  */
 const getComment = asyncHandler(async (req: Request, res: Response) => {
     const chacheKey = 'comment-' + req.params.id
-    const chacedData = chacher.get(chacheKey)
+    const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const id: string = req.params.id
 
-        if (!id) throw new ApiError(400, 'Bad Request: Comment id required.')
-
         try {
             const commentData = await commentRepo.getComment(id)
             const comment = commentData.toObject()
+            cacher.set(chacheKey, comment, 300)
             status200Ok(res).json(comment)
-            chacher.set(chacheKey, comment, 300)
         } catch (err) {
             throw new ApiError(404, 'Comment not found with given id')
         }
@@ -123,8 +121,6 @@ const getComment = asyncHandler(async (req: Request, res: Response) => {
 const deleteComment = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
 
-    if (!id) throw new ApiError(400, 'Bad Request: Comment id required.')
-
     try {
         await commentRepo.deleteComment(id)
         status204NoContent(res)
@@ -142,9 +138,9 @@ const deleteComment = asyncHandler(async (req: Request, res: Response) => {
  * @throws 500 Internal server error
  */
 const updateComment = asyncHandler(async (req: Request, res: Response) => {
-    const { id, text, postId, userId } : 
-        { id: string, text: string, postId: string, userId: string } = req.body
-    const updateCommentDTO = new UpdateCommentDTO(id, text, postId, userId)
+    const { id, text } : 
+        { id: string, text: string } = req.body
+    const updateCommentDTO = new UpdateCommentDTO(id, text)
     await commentRepo.updateComment(updateCommentDTO)
     status204NoContent(res)
 })

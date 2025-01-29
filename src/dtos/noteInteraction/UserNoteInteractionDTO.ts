@@ -36,18 +36,18 @@ export default class UserNoteInteractionDTO extends CreateNoteInteractionDTO {
         return [
             query('type')
                 .isString()
-                .notEmpty().withMessage('Type cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Type cannot be empty.')
                 .escape(),
             query('noteId')
                 .isString()
-                .notEmpty().withMessage('Note Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Note Id cannot be empty.')
                 .escape(),
             query('userId')
                 .isString()
-                .notEmpty().withMessage('User Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('User Id cannot be empty.')
                 .escape(),
         ]
     }

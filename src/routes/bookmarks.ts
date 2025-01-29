@@ -11,6 +11,7 @@ import UserBookmarkDTO from '../dtos/bookmark/UserBookmarkDTO'
 import CreateGuestBookmarkDTO from '../dtos/bookmark/CreateGuestBookmarkDTO'
 import CreateUserBookmarkDTO from '../dtos/bookmark/CreateUserBookmarkDTO'
 import { param } from 'express-validator'
+import { authMiddleware } from '../middleware/auth'
 
 const bookmarkRouter: Router = express.Router()
 
@@ -22,6 +23,7 @@ bookmarkRouter.get(
 )
 bookmarkRouter.get(
     '/user/:userId',
+    authMiddleware,
     UserBookmarkDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     getUserBookmarks
@@ -34,6 +36,7 @@ bookmarkRouter.get(
 )
 bookmarkRouter.get(
     '/user',
+    authMiddleware,
     UserBookmarkDTO.validationAndSanitizationSchema2(),
     validationErrorMiddleware,
     getUserBookmark
@@ -46,13 +49,20 @@ bookmarkRouter.post(
 )
 bookmarkRouter.post(
     '/user',
+    authMiddleware,
     CreateUserBookmarkDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     createUserBookmark
 )
 bookmarkRouter.delete(
     '/:id',
-    [param('id').isString().notEmpty().trim().escape()],
+    [
+        param('id')
+            .isString()
+            .notEmpty().withMessage('Id cannot be empty')
+            .trim()
+            .escape(),
+    ],
     validationErrorMiddleware,
     deleteBookmark
 )

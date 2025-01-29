@@ -7,12 +7,22 @@ import { body } from 'express-validator'
 
 export default class CreatePostDTO {
     protected _title: string
+    protected _images: string[]
     protected _content?: string
+    protected _description?: string
     protected _cover?: string
 
-    constructor(title: string, content?: string, cover?: string) {
+    constructor(
+        title: string,
+        images: string[],
+        content?: string,
+        description?: string,
+        cover?: string)
+    {
         this._title = title
+        this._images = images
         this._content = content
+        this._description = description
         this._cover = cover
     }
 
@@ -20,8 +30,16 @@ export default class CreatePostDTO {
         return this._title
     }
 
+    get images() {
+        return this._images
+    }
+
     get content() {
         return this._content
+    }
+
+    get description() {
+        return this._description
     }
 
     get cover() {
@@ -32,23 +50,37 @@ export default class CreatePostDTO {
         return [
             body('title')
                 .isString()
-                .notEmpty().withMessage('Makale başlığı boş bırakılamaz.')
-                .isLength({max: 255}).withMessage('Makale başlığı en fazla 250 karakter olabilir.')
+                .notEmpty().withMessage('Post title cannot be empty')
+                .isLength({max: 255}).withMessage('Post title can be 255 character long')
+                .trim()
+                .escape(),
+            body('images')
+                .isArray().withMessage('Image array is required wheter is empty or not.'),
+            body('images.*')
                 .trim()
                 .escape(),
             body('content')
                 .optional({values: 'falsy'})
                 .trim()
                 .isString(),
+            body('description')
+                .optional({values: 'falsy'})
+                .isString()
+                .isLength({max: 160}).withMessage(
+                    'Post description cannot be longer than 160 characters.')
+                .trim()
+                .escape(),
             body('cover')
                 .optional({values: 'falsy'})
                 .isString()
                 .trim()
                 .escape(),
+            body('tags')
+                .isArray().withMessage('Tag array is required wheter is empty or not.'),
             body('tags.*')
                 .isString()
-                .notEmpty().withMessage('Etiket adı boş bırakılamaz.')
-                .isLength({max: 100}).withMessage('Etiket adı en fazla 100 karakter olabilir.')
+                .notEmpty().withMessage('Tag name cannot be empty')
+                .isLength({max: 100}).withMessage('Tag name can be 100 character long')
                 .trim()
                 .escape(),
         ]

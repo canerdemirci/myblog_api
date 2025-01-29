@@ -36,18 +36,18 @@ export default class GuestPostInteractionDTO extends CreatePostInteractionDTO {
         return [
             query('type')
                 .isString()
-                .notEmpty().withMessage('Type cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Type cannot be empty.')
                 .escape(),
             query('postId')
                 .isString()
-                .notEmpty().withMessage('Post Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Post Id cannot be empty.')
                 .escape(),
             query('guestId')
                 .isString()
-                .notEmpty().withMessage('Guest Id cannot be empty.')
                 .trim()
+                .notEmpty().withMessage('Guest Id cannot be empty.')
                 .escape(),
         ]
     }
