@@ -53,8 +53,8 @@ const getComments = asyncHandler(async (req: Request, res: Response) => {
     if (!chacedData) {
         const commentsData = await commentRepo.getComments(postId)
         const comments = commentsData.map((c: CommentDTO) => c.toObject())
-        status200Ok(res).json(comments)
         cacher.set(chacheKey, comments, 300)
+        status200Ok(res).json(comments)
     } else {
         status200Ok(res).json(chacedData)
     }

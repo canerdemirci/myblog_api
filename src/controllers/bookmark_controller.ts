@@ -74,8 +74,8 @@ const getUserBookmarks = asyncHandler(async (req: Request, res: Response) => {
     if (!chacedData) {
         const bookmarksData = await bookmarkRepo.getUserBookmarks(userId)
         const bookmarks = bookmarksData.map((b: UserBookmarkDTO) => b.toObject())
-        status200Ok(res).json(bookmarks)
         cacher.set(chacheKey, bookmarks, 300)
+        status200Ok(res).json(bookmarks)
     } else {
         status200Ok(res).json(chacedData)
     }
@@ -97,8 +97,8 @@ const getGuestBookmarks = asyncHandler(async (req: Request, res: Response) => {
     if (!chacedData) {
         const bookmarksData = await bookmarkRepo.getGuestBookmarks(guestId + '-' + req.ip)
         const bookmarks = bookmarksData.map((b: GuestBookmarkDTO) => b.toObject())
-        status200Ok(res).json(bookmarks)
         cacher.set(chacheKey, bookmarks, 300)
+        status200Ok(res).json(bookmarks)
     } else {
         status200Ok(res).json(chacedData)
     }
