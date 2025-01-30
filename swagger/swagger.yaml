@@ -60,6 +60,25 @@ paths:
         - Posts
       summary: "Retrieves all posts from database or cache"
       description: "Retrieves all posts by tag and pagination"
+      parameters:
+        - in: query
+          name: tagId
+          required: false
+          description: "Tag id"
+          schema:
+            type: string
+        - in: query
+          name: take
+          required: false
+          description: "Tag id"
+          schema:
+            type: number
+        - in: query
+          name: skip
+          required: false
+          description: "Tag id"
+          schema:
+            type: number
       responses:
         "200":
           description: "OK"

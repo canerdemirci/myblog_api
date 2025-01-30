@@ -1,5 +1,6 @@
 /**
- * @module postRepository
+ * @module
+ * @class PostRepository
  * This repository used for crud operations at posts.
  */
 
@@ -14,14 +15,16 @@ import PostOfTagDTO from "../dtos/post/PostOfTagDTO"
 
 export default class PostRepository {
     /**
-     * This function takes CreatePostDTO and CreateTagDTOS then creates a post in the database.
-     * Then returns it as a PostDTO.
-     * If an error occurs it throws.
+     * Creates a post in the database.
      * @param createPostDTO CreatePostDTO
-     * @returns Promise<PostDTO>
+     * @param createTagDTOS CreatePostDTO[]
+     * @throws Error
+     * @returns Promise < PostDTO >
      */
-    async createPost(createPostDTO: CreatePostDTO, createTagDTOS: CreateTagDTO[]) :         
-        Promise<PostDTO> {
+    async createPost(
+        createPostDTO: CreatePostDTO,
+        createTagDTOS: CreateTagDTO[]
+    ) : Promise<PostDTO> {
         const post = await prismaClient.post.create({
             data: {
                 title: createPostDTO.title,
@@ -42,10 +45,11 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs all posts with optional tag and limitation from database and returns
-     * them as an Array of PostDTO.
-     * If an error occurs it throws.
-     * @returns Promise<PostDTO[]>
+     * Fetches posts from database by optional pagination and tag id.
+     * @param pagination { take: number, skip: number }
+     * @param byTagId string
+     * @throws Error
+     * @returns Promise < PostDTO[] >
      */
     async getPosts(
         pagination?: { take: number, skip: number },
@@ -79,9 +83,10 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs post search results.
-     * If an error occurs it throws.
+     * Fetches searching results from database.
+     * It searches the query string in post title, tags and description.
      * @param searchString string
+     * @throws Error
      * @returns Promise < PostSearchResultDTO[] >
      */
     async getPostSearchResults(searchString: string) : Promise<PostSearchResultDTO[]> {
@@ -119,9 +124,9 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs related posts by tags maximum 6 piece.
-     * If an error occurs it throws.
+     * Fetches related 6 posts from database. It detects related posts by tags.
      * @param tags string[]
+     * @throws Error
      * @returns Promise < RelatedPostDTO[] >
      */
     async getRelatedPosts(tags: string[]) : Promise<RelatedPostDTO[]> {
@@ -148,9 +153,9 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs posts that belongs a tag.
-     * If an error occurs it throws.
+     * Fetches posts of a tag from database.
      * @param tag string
+     * @throws Error
      * @returns Promise < PostOfTagDTO[] >
      */
     async getPostsOfTag(tag: string) : Promise<PostOfTagDTO[]> {
@@ -177,11 +182,10 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs a post by id from database.
-     * Then returns it as a PostDTO.
-     * If an error occurs it throws.
+     * Fetches a post by id from database.
      * @param id string
-     * @returns Promise<PostDTO>
+     * @throws Error
+     * @returns Promise < PostDTO >
      */
     async getPost(id: string) : Promise<PostDTO> {
         const post = await prismaClient.post.findFirstOrThrow(
@@ -191,22 +195,21 @@ export default class PostRepository {
     }
 
     /**
-     * This function deletes a post by given id.
-     * Prisma disconnects tag to post connections when it deletes the post
-     * If an error occurs it throws.
+     * Deletes a post by id from database.
      * @param id string
-     * @returns Promise<void>
+     * @throws Error
+     * @returns Promise < void >
      */
     async deletePost(id: string) : Promise<void> {
         await prismaClient.post.delete({ where: { id: id } })
     }
 
     /**
-     * This function updates a post and its tags with new post (UpdatePostDTO)
-     * and new tags (CreateTagDTOs)
-     * If an error occurs it throws.
+     * Updates a post from database. It disconnects post's tags and connects new tags.
      * @param newPost UpdatePostDTO
-     * @returns Promise<void>
+     * @param createTagDTOS CreateTagDTO[]
+     * @throws Error
+     * @returns Promise < void >
      */
     async updatePost(newPost: UpdatePostDTO, createTagDTOS: CreateTagDTO[]) : Promise<void> {
         // Fetch tags of the post
@@ -245,8 +248,8 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs all post covers
-     * If an error occurs it throws.
+     * Retrieves all posts' cover images as a list from the database.
+     * @throws Error
      * @returns Promise < string[] >
      */
     async getPostCoversList() : Promise<string[]> {
@@ -267,8 +270,8 @@ export default class PostRepository {
     }
 
     /**
-     * This function fetchs all post content images
-     * If an error occurs it throws.
+     * Retrieves all posts' content images as a list from the database.
+     * @throws Error
      * @returns Promise < string[] >
      */
     async getPostImagesList() : Promise<string[]> {

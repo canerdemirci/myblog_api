@@ -59,6 +59,8 @@ export default class CreatePostDTO {
             body('images.*')
                 .trim()
                 .escape(),
+            // Content doesn't sanitize because it sanitized in frontend
+            // and api takes admin token for security. Only admin can create post.
             body('content')
                 .optional({values: 'falsy'})
                 .trim()

@@ -1,10 +1,24 @@
 /**
- * @module postController
- * Get posts, get a post, search post, create a post, update a post, delete a post.
- * Sanitizing, Validation and Error handling happens in middlewares and routers.
+ * @module
+ * @class PostController
+ * Authorization, Sanitizing, Validation and Error handling made in routers by middlewares.
+ *----------------------------------------------------------------------------------------------
+ * * GET:       /posts                              - Get posts by optional pagination and tag
+ * * GET:       /posts/:id                          - Get a post by id
+ * * GET:       /posts/search/:query                - Get posts by search query
+ * * GET:       /posts/tag/:tag                     - Get posts of a tag
+ * * GET:       /posts/interactions/guest           - Get guest interactions
+ * * GET:       /posts/interactions/user            - Get user interactions
+ * * GET:       /posts/maintenance/unused-covers    - Get unused post covers
+ * * GET:       /posts/maintenance/unused-images    - Get unused post images
+ * * POST:      /posts                              - Creates a post
+ * * POST:      /posts/related                      - Get related posts by tags
+ * * POST:      /posts/interaction/guest            - Add a guest interaction to a post
+ * * POST:      /posts/interaction/user             - Add a user interaction to a post
+ * * PUT:       /posts                              - Update a post
+ * * DELETE:    /posts/:id                          - Delete a post by id
  */
 
-import type { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
 import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
@@ -13,74 +27,57 @@ import { ApiError } from '../middleware/error'
 import fs from 'fs'
 import path from 'path'
 
-import CreatePostDTO from '../dtos/post/CreatePostDTO'
+import PostRepository from '../repositories/post_repository'
+import PostInteractionRepository from '../repositories/postInteraction_repository'
+
 import CreateTagDTO from '../dtos/tag/CreateTagDTO'
+import CreatePostDTO from '../dtos/post/CreatePostDTO'
 import UpdatePostDTO from '../dtos/post/UpdatePostDTO'
 import PostDTO from '../dtos/post/PostDTO'
-
-import PostRepository from '../repositories/post_repository'
-import { InteractionType } from '@prisma/client'
-import PostInteractionRepository from '../repositories/postInteraction_repository'
 import CreateGuestPostInteractionDTO from '../dtos/postInteraction/CreateGuestPostInteractionDTO'
 import CreateUserPostInteractionDTO from '../dtos/postInteraction/CreateUserPostInteractionDTO'
 import PostSearchResultDTO from '../dtos/post/PostSearchResultDTO'
 import RelatedPostDTO from '../dtos/post/RelatedPostDTO'
 import PostOfTagDTO from '../dtos/post/PostOfTagDTO'
 
+import type { Request, Response } from 'express'
+import type { InteractionType } from '@prisma/client'
+import type {
+    AddGuestInteractionReqBody,
+    AddUserInteractionReqBody,
+    CreatePostReqBody,
+    GetGuestInteractionReqQuery,
+    GetPostsReqQuery,
+    GetRelatedPostsReqBody,
+    GetUserInteractionReqQuery,
+    UpdatePostReqBody
+} from '../types/post'
+
 const postRepo = new PostRepository()
 const postInteractionRepo = new PostInteractionRepository()
 
 /**
- * * Acquires From REQUEST BODY: title, content, cover, tags.
- * * Creates a Post with CreatePostDTO and CreateTagDTO s.
- * * Converts the Post to Object
- * * SENDS: Post json - 201 Created - With location
- * 
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 500 Internal server error
- */
-const createPost = asyncHandler(async (req: Request, res: Response) => {
-    const {
-        title,
-        images,
-        content,
-        description,
-        cover,
-        tags
-    } : 
-    {
-        title: string,
-        images: string[],
-        content?: string,
-        description?: string,
-        cover?: string,
-        tags: string[]
-    } = req.body
-
-    const createPostDTO = new CreatePostDTO(title, images, content, description, cover)
-    const createTagDTOS = tags.map(t => new CreateTagDTO(t))
-    const post = await postRepo.createPost(createPostDTO, createTagDTOS)
-    const postJson = post.toObject()
-    status201CreatedWithLocation(res, `${apiUrls.posts}/${postJson.id}`).json(postJson)
-})
-
-/**
  * * Fetches all posts with optional tag and limitation from database or chache
- * * SENDS: Post[] json - 200 OK
+ * * REQUEST: GET - take, skip, tagId - Query
+ * * RESPONSE: 200 OK - Json - Post[]
  * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getPosts = asyncHandler(async (req: Request, res: Response) => {
-    const take = req.query.take as string
-    const skip = req.query.skip as string
-    const tagId = req.query.tagId as string || undefined
+    const { take, skip, tagId } = req.query as GetPostsReqQuery
 
-    const takeNumber = parseInt(take)
-    const skipNumber = parseInt(skip)
+    const takeNumber = take ? (isNaN(parseInt(take)) ? undefined : parseInt(take)) : undefined
+    const skipNumber = skip ? (isNaN(parseInt(skip)) ? undefined : parseInt(skip)) : undefined
+
+    if (takeNumber && skipNumber) {
+        if (takeNumber < 1 || skipNumber < 0) {
+            throw new ApiError(400, 'Invalid take or skip number')
+        }
+    }
 
     const chacheKey =
-        (!isNaN(takeNumber) && !isNaN(skipNumber))
+        (takeNumber && skipNumber)
             ? (`posts-${takeNumber}-${skipNumber}` + (!tagId ? '' : `-${tagId}`))
             : ('posts' + (!tagId ? '' : `-${tagId}`))
 
@@ -88,7 +85,7 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
 
     if (!chacedData) {
         const postsData =
-            (!isNaN(takeNumber) && !isNaN(skipNumber))
+            (takeNumber && skipNumber)
                 ? await postRepo.getPosts({ take: takeNumber, skip: skipNumber }, tagId)
                 : await postRepo.getPosts(undefined, tagId)
                 
@@ -101,10 +98,40 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: query
- * * Fetches post search results from database
- * * SENDS: Post[] json - 200 OK
+ * * Fetches a post by id from database or chache
+ * * REQUEST: GET - id - Path
+ * * RESPONSE: 200 OK - Json - Post
  * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 404 Not found
+ * @throws 500 Internal server error
+ */
+const getPost = asyncHandler(async (req: Request, res: Response) => {
+    const id: string = req.params.id
+
+    const chacheKey = 'post-' + id
+    const chacedData = cacher.get(chacheKey)
+
+    if (!chacedData) {
+        try {
+            const postData = await postRepo.getPost(id)
+            const post = postData.toObject()
+            cacher.set(chacheKey, post, 300)
+            status200Ok(res).json(post)
+        } catch (err) {
+            throw new ApiError(404, 'Post not found with given id')
+        }
+    } else {
+        status200Ok(res).json(chacedData)
+    }
+})
+
+/**
+ * * Fetches post search results from database
+ * * REQUEST: GET - query - Path
+ * * RESPONSE: 200 OK - Json - PostSearchResult
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getPostSearchResults = asyncHandler(async (req: Request, res: Response) => {
@@ -116,25 +143,11 @@ const getPostSearchResults = asyncHandler(async (req: Request, res: Response) =>
 })
 
 /**
- * * Acquires from REQUEST BODY: tags
- * * Fetches related posts by tags from database maximum 6 piece
- * * SENDS: RelatedPost[] json - 200 OK
+ * * Fetches posts that belongs to a tag from database or cache.
+ * * REQUEST: GET - tag - Path
+ * * RESPONSE: 200 OK - Json - PostOfTag
  * @throws 401 Unauthorized
- * @throws 500 Internal server error
- */
-const getRelatedPosts = asyncHandler(async (req: Request, res: Response) => {
-    const { tags } : { tags: string[] } = req.body
-
-    const postsData = await postRepo.getRelatedPosts(tags)
-    const posts = postsData.map((p: RelatedPostDTO) => p.toObject())
-    status200Ok(res).json(posts)
-})
-
-/**
- * * Acquires from REQUEST PARAMS: tag
- * * Fetches posts that belongs to a tag from database.
- * * SENDS: PostOfTagDTO[] json - 200 OK
- * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getPostsOfTag = asyncHandler(async (req: Request, res: Response) => {
@@ -154,142 +167,15 @@ const getPostsOfTag = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
- * * Fetches a post by id from database or chache
- * * SENDS: Post json - 200 OK
+ * * Fetches guest interactions of a post from database.
+ * * REQUEST: GET - type, guestId, postId - Query
+ * * RESPONSE: 200 OK - Json - GuestPostInteraction[]
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 404 Not found
- * @throws 500 Internal server error
- */
-const getPost = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'post-' + req.params.id
-    const chacedData = cacher.get(chacheKey)
-
-    if (!chacedData) {
-        const id: string = req.params.id
-
-        try {
-            const postData = await postRepo.getPost(id)
-            const post = postData.toObject()
-            cacher.set(chacheKey, post, 300)
-            status200Ok(res).json(post)
-        } catch (err) {
-            throw new ApiError(404, 'Post not found with given id')
-        }
-    } else {
-        status200Ok(res).json(chacedData)
-    }
-})
-
-/**
- * * Acquires from REQUEST PARAMS: id
- * * Deletes a post from database by id
- * * SENDS: 204 No Content
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 404 Not found
- * @throws 500 Internal server error
- */
-const deletePost = asyncHandler(async (req: Request, res: Response) => {
-    const id: string = req.params.id
-
-    await postRepo.deletePost(id)
-    status204NoContent(res)
-})
-
-/**
- * * Acquires from REQUEST BODY: id, title, content, cover, tags
- * * Updates a Post with UpdatePostDTO
- * * SENDS: 204 No Content
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 500 Internal server error
- */
-const updatePost = asyncHandler(async (req: Request, res: Response) => {
-    const {
-        id,
-        title,
-        images,
-        content,
-        description,
-        cover,
-        tags
-    } : 
-    {
-        id: string,
-        title: string,
-        images: string[],
-        content?: string,
-        description?: string,
-        cover?: string,
-        tags: string[]
-    } = req.body
-
-    const updatePostDTO = new UpdatePostDTO(id, title, images, content, description, cover)
-    const createTagDTOS = tags.map(t => new CreateTagDTO(t))
-    await postRepo.updatePost(updatePostDTO, createTagDTOS)
-    status204NoContent(res)
-})
-
-/**
- * * Acquires from REQUEST BODY: type, postId, questId
- * * Adds u guest interaction to PostInteraction table
- * * The guest can't like, unlike or view a post more than one and can share a post
- * more than one time.
- * * Changes view, share or like count of a post then add record to post interactions table
- * to keep track interactions of a quest or an user.
- * * SENDS: 200 OK
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 500 Internal server error
- */
-const addGuestInteraction = asyncHandler(async (req: Request, res: Response) => {
-    const { type, postId, guestId }
-        : { type: InteractionType, postId: string, guestId: string } = req.body
-    
-    const createGuestPostInteractionDTO =
-        new CreateGuestPostInteractionDTO(type, postId, guestId, req.ip)
-    await postInteractionRepo.createGuestInteraction(createGuestPostInteractionDTO)
-
-    status200Ok(res).send()
-})
-
-/**
- * * Acquires from REQUEST BODY: type, postId, userId
- * * Adds u user interaction to PostInteraction table
- * * The user can't like, unlike or view a post more than one and can share a post
- * more than one time.
- * * Changes view, share or like count of a post then add record to post interactions table
- * to keep track interactions of a quest or an user.
- * * SENDS: 200 OK
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 500 Internal server error
- */
-const addUserInteraction = asyncHandler(async (req: Request, res: Response) => {
-    const { type, postId, userId }
-        : { type: InteractionType, postId: string, userId: string } = req.body
-    
-    const createUserPostInteractionDTO =
-        new CreateUserPostInteractionDTO(type, postId, userId)
-    await postInteractionRepo.createUserInteraction(createUserPostInteractionDTO)
-
-    status200Ok(res).send()
-})
-
-/**
- * * Fetches the guest post interactions.
- * * Acquires from REQUEST QUERY - type, guestId, postId
- * * SENDS: 200 OK - GuestPostInteractionDTO[] as json
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getGuestInteractions = asyncHandler(async (req: Request, res: Response) => {
-    const type = req.query.type as string
-    const guestId = req.query.guestId as string
-    const postId = req.query.postId as string
+    const { type, guestId, postId } = req.query as GetGuestInteractionReqQuery
 
     const results = await postInteractionRepo.getGuestInteractions(
         type as InteractionType, guestId + '-' + req.ip, postId)
@@ -298,17 +184,15 @@ const getGuestInteractions = asyncHandler(async (req: Request, res: Response) =>
 })
 
 /**
- * * Fetches the user post interactions.
- * * Acquires from REQUEST QUERY - type, userId, postId
- * * SENDS: 200 OK - UserPostInteractionDTO[] as json
+ * * Fetches user interactions of a post from database.
+ * * REQUEST: GET - type, userId, postId - Query
+ * * RESPONSE: 200 OK - Json - UserPostInteraction[]
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getUserInteractions = asyncHandler(async (req: Request, res: Response) => {
-    const type = req.query.type as string
-    const userId = req.query.userId as string
-    const postId = req.query.postId as string
+    const { type, userId, postId } = req.query as GetUserInteractionReqQuery
 
     const results = await postInteractionRepo.getUserInteractions(
         type as InteractionType, userId, postId)
@@ -317,9 +201,11 @@ const getUserInteractions = asyncHandler(async (req: Request, res: Response) => 
 })
 
 /**
- * * Fetches all unused post covers
- * * SENDS: string[] json - 200 OK
+ * * Fetches unused post cover images in folder.
+ * * REQUEST: GET
+ * * RESPONSE: 200 OK - Json - string[]
  * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getUnusedCovers = asyncHandler(async (req: Request, res: Response) => {
@@ -339,9 +225,11 @@ const getUnusedCovers = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Fetches all unused post content images
- * * SENDS: string[] json - 200 OK
+ * * Fetches unused post content images in folder.
+ * * REQUEST: GET
+ * * RESPONSE: 200 OK - Json - string[]
  * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getUnusedImages = asyncHandler(async (req: Request, res: Response) => {
@@ -360,19 +248,149 @@ const getUnusedImages = asyncHandler(async (req: Request, res: Response) => {
     })
 })
 
+/**
+ * * Creates a post in database.
+ * * REQUEST: POST - title, images, content, description, cover, tags - Body
+ * * RESPONSE: 201 Created with Location - Json - Post
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const createPost = asyncHandler(async (req: Request, res: Response) => {
+    const {
+        title,
+        images,
+        content,
+        description,
+        cover,
+        tags
+    } : CreatePostReqBody = req.body
+
+    const createPostDTO = new CreatePostDTO(title, images, content, description, cover)
+    const createTagDTOS = tags.map(t => new CreateTagDTO(t))
+    const post = await postRepo.createPost(createPostDTO, createTagDTOS)
+    const postJson = post.toObject()
+    status201CreatedWithLocation(res, `${apiUrls.posts}/${postJson.id}`).json(postJson)
+})
+
+/**
+ * * Fetches related posts from database by tags.
+ * * REQUEST: POST - tags - Body
+ * * RESPONSE: 200 OK - Json - RelatedPost[]
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const getRelatedPosts = asyncHandler(async (req: Request, res: Response) => {
+    const { tags } : GetRelatedPostsReqBody = req.body
+
+    const postsData = await postRepo.getRelatedPosts(tags)
+    const posts = postsData.map((p: RelatedPostDTO) => p.toObject())
+    status200Ok(res).json(posts)
+})
+
+/**
+ * * Adds guest interaction to a post interaction table.
+ * * The guest can't like, unlike or view a post more than one time but can share a post
+ * * Changes view, share or like count of a post.
+ * * REQUEST: POST - type, postId, guestId - Body
+ * * RESPONSE: 200 OK
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const addGuestInteraction = asyncHandler(async (req: Request, res: Response) => {
+    const { type, postId, guestId } : AddGuestInteractionReqBody = req.body
+    
+    const createGuestPostInteractionDTO =
+        new CreateGuestPostInteractionDTO(type, postId, guestId, req.ip)
+    await postInteractionRepo.createGuestInteraction(createGuestPostInteractionDTO)
+
+    status200Ok(res).send()
+})
+
+/**
+ * * Adds user interaction to a post interaction table.
+ * * The user can't like, unlike or view a post more than one time but can share a post
+ * * Changes view, share or like count of a post.
+ * * REQUEST: POST - type, postId, userId - Body
+ * * RESPONSE: 200 OK
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const addUserInteraction = asyncHandler(async (req: Request, res: Response) => {
+    const { type, postId, userId } : AddUserInteractionReqBody = req.body
+    
+    const createUserPostInteractionDTO =
+        new CreateUserPostInteractionDTO(type, postId, userId)
+    await postInteractionRepo.createUserInteraction(createUserPostInteractionDTO)
+
+    status200Ok(res).send()
+})
+
+/**
+ * * Updates a post.
+ * * REQUEST: PUT - id, title, images, content, description, cover, tags - Body
+ * * RESPONSE: 204 No content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const updatePost = asyncHandler(async (req: Request, res: Response) => {
+    const {
+        id,
+        title,
+        images,
+        content,
+        description,
+        cover,
+        tags
+    } : UpdatePostReqBody = req.body
+
+    const updatePostDTO = new UpdatePostDTO(id, title, images, content, description, cover)
+    const createTagDTOS = tags.map(t => new CreateTagDTO(t))
+    await postRepo.updatePost(updatePostDTO, createTagDTOS)
+    status204NoContent(res)
+})
+
+/**
+ * * Acquires from REQUEST PARAMS: id
+ * * Deletes a post from database by id
+ * * SENDS: 204 No Content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request - Validation error
+ * @throws 404 Not found
+ * @throws 500 Internal server error
+ */
+/**
+ * * Deletes a post.
+ * * REQUEST: DELETE - id - Path
+ * * RESPONSE: 204 No content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const deletePost = asyncHandler(async (req: Request, res: Response) => {
+    const id: string = req.params.id
+
+    await postRepo.deletePost(id)
+    status204NoContent(res)
+})
+
 export {
-    createPost,
     getPosts,
-    getPostSearchResults,
-    getRelatedPosts,
-    getPostsOfTag,
     getPost,
-    deletePost,
-    updatePost,
-    addGuestInteraction,
-    addUserInteraction,
+    getPostSearchResults,
+    getPostsOfTag,
     getGuestInteractions,
     getUserInteractions,
     getUnusedCovers,
-    getUnusedImages
+    getUnusedImages,
+    createPost,
+    getRelatedPosts,
+    addGuestInteraction,
+    addUserInteraction,
+    updatePost,
+    deletePost
 }
