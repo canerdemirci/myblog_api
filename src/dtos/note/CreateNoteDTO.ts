@@ -1,5 +1,6 @@
 /**
- * @module CreateNoteDTO
+ * @module
+ * @class CreateNoteDTO
  * Used to create note in database.
  */
 

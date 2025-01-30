@@ -1,5 +1,6 @@
 /**
- * @module PostOfTagDTO
+ * @module
+ * @class PostOfTagDTO
  * To use the fetched posts belongs the a tag comes from database.
  */
 

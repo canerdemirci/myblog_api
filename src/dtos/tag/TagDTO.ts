@@ -1,5 +1,6 @@
 /**
- * @module TagDTO
+ * @module
+ * @class TagDTO
  * To use the fetched tag object from database.
  */
 

@@ -1,5 +1,6 @@
 /**
- * @module PostDTO
+ * @module
+ * @class PostDTO
  * To use the fetched post object from database.
  */
 

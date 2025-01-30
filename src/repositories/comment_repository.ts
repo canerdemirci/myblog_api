@@ -1,9 +1,11 @@
 /**
- * @module commentRepository
+ * @module
+ * @class CommentRepository
  * This repository used for crud operations at comments.
  */
 
 import prismaClient from "../utils/prismaClient"
+
 import CreateCommentDTO from "../dtos/comment/CreateCommentDTO"
 import CommentDTO from "../dtos/comment/CommentDTO"
 import UpdateCommentDTO from "../dtos/comment/UpdateCommentDTO"
@@ -12,8 +14,8 @@ export default class CommentRepository {
     /**
      * Creates a comment with related post and user.
      * @param createCommentDTO CreateCommentDTO
-     * @returns Promise < CommentDTO >
      * @throws Error
+     * @returns Promise < CommentDTO >
      */
     async createComment(createCommentDTO: CreateCommentDTO) : Promise<CommentDTO> {
         const comment = await prismaClient.comment.create({
@@ -38,9 +40,9 @@ export default class CommentRepository {
 
     /**
      * Fetches all comments belongs to a post with some of their owner (user) infos.
-     * @params postId string
-     * @returns Promise < CommentDTO[] >
+     * @param postId string
      * @throws Error
+     * @returns Promise < CommentDTO[] >
      */
     async getComments(postId: string) : Promise<CommentDTO[]> {
         const comments = await prismaClient.comment.findMany({
@@ -67,8 +69,8 @@ export default class CommentRepository {
 
     /**
      * Fetches all comments with some of their owner (user) infos.
-     * @returns Promise < CommentDTO[] >
      * @throws Error
+     * @returns Promise < CommentDTO[] >
      */
     async getAllComments() : Promise<CommentDTO[]> {
         const comments = await prismaClient.comment.findMany({
@@ -96,10 +98,10 @@ export default class CommentRepository {
     }
 
     /**
-     * Fetches a comment.
+     * Fetches a comment by id.
      * @param id string
-     * @returns Promise < CommentDTO >
      * @throws Error
+     * @returns Promise < CommentDTO >
      */
     async getComment(id: string) : Promise<CommentDTO> {
         const comment = await prismaClient.comment.findFirstOrThrow({ where: { id: id } })
@@ -108,11 +110,10 @@ export default class CommentRepository {
     }
 
     /**
-     * Deletes a comment.
-     * Prisma disconnects comment to post or users connections when it deletes the post
+     * Deletes a comment by id.
      * @param id string
-     * @returns Promise < void >
      * @throws Error
+     * @returns Promise < void >
      */
     async deleteComment(id: string) : Promise<void> {
         await prismaClient.comment.delete({ where: { id: id } })
@@ -121,8 +122,8 @@ export default class CommentRepository {
     /**
      * Updates the comment.
      * @param newComment UpdateCommentDTO
-     * @returns Promise < void >
      * @throws Error
+     * @returns Promise < void >
      */
     async updateComment(newComment: UpdateCommentDTO) : Promise<void> {
         await prismaClient.comment.update({

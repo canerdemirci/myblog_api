@@ -1,7 +1,11 @@
 /**
- * @module tagController
- * Get tags, get a tag, create a tag, delete a tag
- * Sanitizing, Validation and Error handling happens in middlewares and routers.
+ * @module
+ * Authorization, Sanitizing, Validation and Error handling made in routers by middlewares.
+ *----------------------------------------------------------------------------------------------
+ * * GET:       /tags                              - Get all tags
+ * * GET:       /tags/:id                          - Get a tag by id
+ * * POST:      /tags                              - Create a tag
+ * * DELETE:    /tags/:id                          - Deletes a tag by id
  */
 
 import { Request, Response } from 'express'
@@ -19,26 +23,9 @@ import TagRepository from '../repositories/tag_repository'
 const tagRepo = new TagRepository()
 
 /**
- * * Acquires From REQUEST BODY: name
- * * Creates a Tag with CreateTagDTO
- * * Converts the Tag to Object
- * * SENDS: Tag json - 201 Created - With location
- * 
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 500 Internal server error
- */
-const createTag = asyncHandler(async (req: Request, res: Response) => {
-    const { name } : { name: string } = req.body
-    const createTagDTO = new CreateTagDTO(name)
-    const tag = await tagRepo.createTag(createTagDTO)
-    const tagJson = tag.toObject()
-    status201CreatedWithLocation(res, `${apiUrls.tags}/${tagJson.id}`).json(tagJson)
-})
-
-/**
  * * Fetches all tags from database or chache
- * * SENDS: Tag[] json - 200 OK
+ * * REQUEST: GET
+ * * RESPONSE: 200 OK - Json - Tag[]
  * @throws 401 Unauthorized
  * @throws 500 Internal server error
  */
@@ -57,11 +44,11 @@ const getTags = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
  * * Fetches a tag by id from database or chache
- * * SENDS: Tag json - 200 OK
+ * * REQUEST: GET - id - Path
+ * * RESPONSE: 200 OK - Json - Tag
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 404 Not found
  * @throws 500 Internal server error
  */
@@ -86,11 +73,27 @@ const getTag = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
- * * Deletes a tag from database by id
- * * SENDS: 204 No Content
+ * * Creates a tag with name
+ * * REQUEST: POST - name - Body
+ * * RESPONSE: 201 Created with Location - Json - Post[]
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
+ * @throws 500 Internal server error
+ */
+const createTag = asyncHandler(async (req: Request, res: Response) => {
+    const { name } : { name: string } = req.body
+    const createTagDTO = new CreateTagDTO(name)
+    const tag = await tagRepo.createTag(createTagDTO)
+    const tagJson = tag.toObject()
+    status201CreatedWithLocation(res, `${apiUrls.tags}/${tagJson.id}`).json(tagJson)
+})
+
+/**
+ * * Deletes a tag by id
+ * * REQUEST: GET - id - Path
+ * * RESPONSE: 204 No content
+ * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 404 Not found
  * @throws 500 Internal server error
  */
@@ -106,8 +109,8 @@ const deleteTag = asyncHandler(async (req: Request, res: Response) => {
 })
 
 export {
-    createTag,
     getTags,
     getTag,
+    createTag,
     deleteTag
 }

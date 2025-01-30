@@ -24,7 +24,7 @@ export class ApiError extends Error {
 
 /**
  * Error handling function. This function send response
- * with error info ({ success: boolean, message: string, stack: string}) and
+ * with error info ({ success: boolean, message: string, stack: string }) and
  * log error info same way.
  * If error is
  * - ApiError: statusCode = Error's status code

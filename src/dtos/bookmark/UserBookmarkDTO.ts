@@ -1,5 +1,6 @@
 /**
- * @module UserBookmarkDTO
+ * @module
+ * @class UserBookmarkDTO
  * To use the fetched user bookmark object from database.
  */
 

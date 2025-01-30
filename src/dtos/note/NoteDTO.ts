@@ -1,5 +1,6 @@
 /**
- * @module NoteDTO
+ * @module
+ * @class NoteDTO
  * To use the fetched note object from database.
  */
 

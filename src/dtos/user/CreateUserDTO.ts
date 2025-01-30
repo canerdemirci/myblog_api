@@ -1,5 +1,6 @@
 /**
- * @module CreateUserDTO
+ * @module
+ * @class CreateUserDTO
  * Used to create user in database.
  */
 

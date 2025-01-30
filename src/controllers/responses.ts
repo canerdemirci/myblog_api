@@ -1,5 +1,5 @@
 /**
- * @module responses
+ * @module
  * Response functions like 200, 201, 500...
  * To remember status codes as name.
  */

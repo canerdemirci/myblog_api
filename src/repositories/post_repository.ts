@@ -45,6 +45,59 @@ export default class PostRepository {
     }
 
     /**
+     * Updates a post from database. It disconnects post's tags and connects new tags.
+     * @param newPost UpdatePostDTO
+     * @param createTagDTOS CreateTagDTO[]
+     * @throws Error
+     * @returns Promise < void >
+     */
+    async updatePost(newPost: UpdatePostDTO, createTagDTOS: CreateTagDTO[]) : Promise<void> {
+        // Fetch tags of the post
+        const tagsInOldPost = await prismaClient.post.findFirstOrThrow({
+            where: { id: newPost.id },
+            select: { tags: true }
+        })
+
+        // If there is a tag in the post which there isn't in the new post
+        // remove that tag to post connection
+        const tagsWillBeRemovedFromPost: {name: string}[] = []
+        
+        tagsInOldPost.tags.forEach(to => {
+            if (!createTagDTOS.map(t => t.name).includes(to.name)) {
+                tagsWillBeRemovedFromPost.push({name: to.name})
+            }
+        })
+
+        await prismaClient.post.update({
+            where: { id: newPost.id },
+            data: {
+                title: newPost.title,
+                images: newPost.images,
+                content: newPost.content,
+                description: newPost.description,
+                cover: newPost.cover,
+                tags: {
+                    connectOrCreate: createTagDTOS.map(t => ({
+                        create: { name: t.name },
+                        where: { name: t.name }
+                    })),
+                    disconnect: tagsWillBeRemovedFromPost
+                }
+            }
+        })
+    }
+
+    /**
+     * Deletes a post by id from database.
+     * @param id string
+     * @throws Error
+     * @returns Promise < void >
+     */
+    async deletePost(id: string) : Promise<void> {
+        await prismaClient.post.delete({ where: { id: id } })
+    }
+
+    /**
      * Fetches posts from database by optional pagination and tag id.
      * @param pagination { take: number, skip: number }
      * @param byTagId string
@@ -80,6 +133,19 @@ export default class PostRepository {
         })
 
         return posts.map(p => PostDTO.fromDB(p))
+    }
+
+    /**
+     * Fetches a post by id from database.
+     * @param id string
+     * @throws Error
+     * @returns Promise < PostDTO | never >
+     */
+    async getPost(id: string) : Promise<PostDTO | never> {
+        const post = await prismaClient.post.findFirstOrThrow(
+            { where: { id: id }, include: { tags: true } })
+        
+        return PostDTO.fromDB(post)
     }
 
     /**
@@ -179,72 +245,6 @@ export default class PostRepository {
         })
 
         return posts.at(0)?.posts.map(p => PostOfTagDTO.fromDB(p)) || [] as PostOfTagDTO[]
-    }
-
-    /**
-     * Fetches a post by id from database.
-     * @param id string
-     * @throws Error
-     * @returns Promise < PostDTO >
-     */
-    async getPost(id: string) : Promise<PostDTO> {
-        const post = await prismaClient.post.findFirstOrThrow(
-            { where: { id: id }, include: { tags: true } })
-        
-        return PostDTO.fromDB(post)
-    }
-
-    /**
-     * Deletes a post by id from database.
-     * @param id string
-     * @throws Error
-     * @returns Promise < void >
-     */
-    async deletePost(id: string) : Promise<void> {
-        await prismaClient.post.delete({ where: { id: id } })
-    }
-
-    /**
-     * Updates a post from database. It disconnects post's tags and connects new tags.
-     * @param newPost UpdatePostDTO
-     * @param createTagDTOS CreateTagDTO[]
-     * @throws Error
-     * @returns Promise < void >
-     */
-    async updatePost(newPost: UpdatePostDTO, createTagDTOS: CreateTagDTO[]) : Promise<void> {
-        // Fetch tags of the post
-        const tagsInOldPost = await prismaClient.post.findFirstOrThrow({
-            where: { id: newPost.id },
-            select: { tags: true }
-        })
-
-        // If there is a tag in the post which there isn't in the new post
-        // remove that tag to post connection
-        const tagsWillBeRemovedFromPost: {name: string}[] = []
-        
-        tagsInOldPost.tags.forEach(to => {
-            if (!createTagDTOS.map(t => t.name).includes(to.name)) {
-                tagsWillBeRemovedFromPost.push({name: to.name})
-            }
-        })
-
-        await prismaClient.post.update({
-            where: { id: newPost.id },
-            data: {
-                title: newPost.title,
-                images: newPost.images,
-                content: newPost.content,
-                description: newPost.description,
-                cover: newPost.cover,
-                tags: {
-                    connectOrCreate: createTagDTOS.map(t => ({
-                        create: { name: t.name },
-                        where: { name: t.name }
-                    })),
-                    disconnect: tagsWillBeRemovedFromPost
-                }
-            }
-        })
     }
 
     /**

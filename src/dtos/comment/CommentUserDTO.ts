@@ -1,5 +1,6 @@
 /**
- * @module CommentUserDTO
+ * @module
+ * @class CommentUserDTO
  * An object that contains some user infos for comments.
  */
 

@@ -1,5 +1,6 @@
 /**
- * @module CreateUserBookmarkDTO
+ * @module
+ * @class CreateUserBookmarkDTO
  * Used to create user bookmark in database.
  */
 

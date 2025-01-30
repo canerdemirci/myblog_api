@@ -1,47 +1,54 @@
 /**
- * @module commentController
- * Get comments, get a comment, create a comment, update a comment, delete a comment.
- * Sanitizing, Validation and Error handling happens in middlewares and routers.
+ * @module
+ * Authorization, Sanitizing, Validation and Error handling made in routers by middlewares.
+ *----------------------------------------------------------------------------------------------
+ * * GET:        /comments/bypostid/:postId          - Get comments by postId
+ * * GET:        /comments/all                       - Get all comments
+ * * GET:        /comments/:id                       - Get a comment by id
+ * * POST:       /comments                           - Creates a comment
+ * * PUT:        /comments                           - Updates a comment
+ * * DELETE:     /comments/:id                       - Deletes a comment by id
  */
 
-import type { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
 import { cacher } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
+
 import CommentRepository from '../repositories/comment_repository'
+
 import CreateCommentDTO from '../dtos/comment/CreateCommentDTO'
 import CommentDTO from '../dtos/comment/CommentDTO'
 import UpdateCommentDTO from '../dtos/comment/UpdateCommentDTO'
 
+import type { Request, Response } from 'express'
+import { CreateCommentReqBody, UpdateCommentReqBody } from '../types/comment'
+
 const commentRepo = new CommentRepository()
 
 /**
- * * Acquires From REQUEST BODY: text, postId, userId.
- * * Creates a Comment with CreateCommentDTO.
- * * Converts the Comment to Object
- * * SENDS: Comment json - 201 Created - With location
- * 
+ * * Creates a post comment in database.
+ * * REQUEST: POST - text, postId, userId - Body
+ * * RESPONSE: 201 Created with Location - Json - Comment
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const createComment = asyncHandler(async (req: Request, res: Response) => {
-    const { text, postId, userId } : 
-        { text: string, postId: string, userId: string } = req.body
-    const createCommentDTO = 
-        new CreateCommentDTO(text, postId, userId)
+    const { text, postId, userId } : CreateCommentReqBody = req.body
+    const createCommentDTO = new CreateCommentDTO(text, postId, userId)
     const comment = await commentRepo.createComment(createCommentDTO)
     const commentJson = comment.toObject()
     status201CreatedWithLocation(res, `${apiUrls.comments}/${commentJson.id}`).json(commentJson)
 })
 
 /**
- * * Acquires from REQUEST QUERY: postId
- * * Fetches all comments by postId from database or chache
- * * SENDS: Comment[] json - 200 OK
+ * * Fetches comments that belongs to a post from database or cache.
+ * * REQUEST: GET - postId - Path
+ * * RESPONSE: 200 OK - Json - Comment[]
  * @throws 401 Unauthorized
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getComments = asyncHandler(async (req: Request, res: Response) => {
@@ -61,8 +68,9 @@ const getComments = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Fetches all comments from database or chache
- * * SENDS: Comment[] json - 200 OK
+ * * Fetches all comments from database or cache.
+ * * REQUEST: GET
+ * * RESPONSE: 200 OK - Json - Comment[]
  * @throws 401 Unauthorized
  * @throws 500 Internal server error
  */
@@ -81,11 +89,11 @@ const getAllComments = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
- * * Fetches a comment by id from database or chache
- * * SENDS: Comment json - 200 OK
+ * * Fetches a comment by id from database or cache.
+ * * REQUEST: GET - id - Path
+ * * RESPONSE: 200 OK - Json - Comment
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 404 Not found
  * @throws 500 Internal server error
  */
@@ -110,11 +118,11 @@ const getComment = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
- * * Deletes a comment from database by id
- * * SENDS: 204 No Content
+ * * Deletes a comment by id from database.
+ * * REQUEST: DELETE - id - Path
+ * * RESPONSE: 204 No content
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 404 Not found
  * @throws 500 Internal server error
  */
@@ -130,26 +138,25 @@ const deleteComment = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST BODY: id, text, postId, userId.
- * * Updates a Comment with UpdateCommentDTO.
- * * SENDS: 204 No Content
+ * * Updates a comment by id from database.
+ * * REQUEST: PUT - id, text - Body
+ * * RESPONSE: 204 No content
  * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
+ * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const updateComment = asyncHandler(async (req: Request, res: Response) => {
-    const { id, text } : 
-        { id: string, text: string } = req.body
+    const { id, text } : UpdateCommentReqBody = req.body
     const updateCommentDTO = new UpdateCommentDTO(id, text)
     await commentRepo.updateComment(updateCommentDTO)
     status204NoContent(res)
 })
 
 export {
-    createComment,
-    getComment,
     getComments,
     getAllComments,
+    getComment,
+    createComment,
     updateComment,
     deleteComment
 }

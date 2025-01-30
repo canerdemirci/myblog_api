@@ -7,8 +7,8 @@
  * * GET:       /posts/:id                          - Get a post by id
  * * GET:       /posts/search/:query                - Get posts by search query
  * * GET:       /posts/tag/:tag                     - Get posts of a tag
- * * GET:       /posts/interactions/guest           - Get guest interactions
- * * GET:       /posts/interactions/user            - Get user interactions
+ * * GET:       /posts/interactions/guest?type&guestId&postId       - Get guest interactions
+ * * GET:       /posts/interactions/user?type&userId&postId         - Get user interactions
  * * GET:       /posts/maintenance/unused-covers    - Get unused post covers
  * * GET:       /posts/maintenance/unused-images    - Get unused post images
  * * POST:      /posts                              - Creates a post

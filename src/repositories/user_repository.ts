@@ -1,19 +1,20 @@
 /**
- * @module userRepository
+ * @module
+ * @class UserRepository
  * This repository used for crud operations at users.
  */
 
 import prismaClient from "../utils/prismaClient"
+
 import CreateUserDTO from "../dtos/user/CreateUserDTO"
 import UserDTO from "../dtos/user/UserDTO"
 
 export default class UserRepository {
     /**
-     * This function takes CreateUserDTO then creates an user in the database.
-     * Then returns it as a UserDTO.
-     * If an error occurs it throws.
+     * Creates a user in the database.
      * @param createUserDTO CreateUserDTO
-     * @returns Promise<UserDTO>
+     * @throws Error
+     * @returns Promise < UserDTO >
      */
     async createUser(createUserDTO: CreateUserDTO) : Promise<UserDTO> {
         const user = await prismaClient.user.create({
@@ -31,10 +32,9 @@ export default class UserRepository {
     }
 
     /**
-     * This function fetchs all users from database and returns
-     * them as an Array of UserDTO.
-     * If an error occurs it throws.
-     * @returns Promise<UserDTO[]>
+     * Fetchs all users from database.
+     * @throws Error
+     * @returns Promise < UserDTO[] >
      */
     async getUsers() : Promise<UserDTO[]> {
         const users = await prismaClient.user.findMany({
@@ -45,11 +45,10 @@ export default class UserRepository {
     }
 
     /**
-     * This function fetchs an user by id from database.
-     * Then returns it as a UserDTO.
-     * If an error occurs it throws.
+     * Fetchs a users by id from database.
      * @param id string
-     * @returns Promise<UserDTO>
+     * @throws Error
+     * @returns Promise < UserDTO >
      */
     async getUser(id: string) : Promise<UserDTO> {
         const user = await prismaClient.user.findFirstOrThrow({
@@ -60,10 +59,9 @@ export default class UserRepository {
     }
 
     /**
-     * This function fetchs an user by email from database.
-     * Then returns it as a UserDTO.
-     * If an error occurs it throws.
-     * @param email string
+     * Fetchs a users by email from database.
+     * @param email string 
+     * @throws Error
      * @returns Promise < UserDTO >
      */
     async getUserByEmail(email: string) : Promise<UserDTO> {
@@ -75,11 +73,10 @@ export default class UserRepository {
     }
 
     /**
-     * This function fetchs an user by providerId from database.
-     * Then returns it as a UserDTO.
-     * If an error occurs it throws.
-     * @param providerId string
-     * @returns Promise<UserDTO>
+     * Fetchs a users by provider id from database.
+     * @param providerId string 
+     * @throws Error
+     * @returns Promise < UserDTO >
      */
     async getUserByProviderId(providerId: string) : Promise<UserDTO> {
         const user = await prismaClient.user.findFirstOrThrow({
@@ -90,12 +87,11 @@ export default class UserRepository {
     }
 
     /**
-     * This function fetchs an user by email and password from database.
-     * Then returns it as a UserDTO.
-     * If an error occurs it throws.
-     * @param email string
-     * @param password string
-     * @returns Promise<UserDTO>
+     * Fetchs a users by email and password from database.
+     * @param email string 
+     * @param password string 
+     * @throws Error
+     * @returns Promise < UserDTO >
      */
     async getUserByEmailAndPassword(email: string, password: string) : Promise<UserDTO> {
         const user = await prismaClient.user.findFirstOrThrow({
@@ -106,10 +102,11 @@ export default class UserRepository {
     }
 
     /**
-     * This function updates user data by id.
-     * @param id string
-     * @param image string
-     * @param name string
+     * Updates a users in database.
+     * @param id string 
+     * @param image string 
+     * @param name string 
+     * @throws Error
      * @returns Promise < void >
      */
     async updateUser(id: string, image?: string, name?: string) : Promise<void> {
@@ -127,9 +124,9 @@ export default class UserRepository {
     }
 
     /**
-     * This function deletes an user by given id.
-     * If an error occurs it throws.
-     * @param id string
+     * Deletes a users by id from database.
+     * @param id string 
+     * @throws Error
      * @returns Promise < void >
      */
     async deleteUser(id: string) : Promise<void> {

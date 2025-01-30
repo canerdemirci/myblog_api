@@ -1,5 +1,6 @@
 /**
- * @module CommentDTO
+ * @module
+ * @class CommentDTO
  * To use the fetched comment object from database.
  */
 

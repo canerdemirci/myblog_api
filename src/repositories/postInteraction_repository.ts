@@ -1,14 +1,17 @@
 /**
- * @module postInteractionRepository
+ * @module
+ * @class PostInteractionRepository
  * This repository used for post interactions.
  */
+
+import prismaClient from "../utils/prismaClient"
 
 import CreateGuestPostInteractionDTO from "../dtos/postInteraction/CreateGuestPostInteractionDTO"
 import CreatePostInteractionDTO from "../dtos/postInteraction/CreatePostInteractionDTO"
 import CreateUserPostInteractionDTO from "../dtos/postInteraction/CreateUserPostInteractionDTO"
 import GuestPostInteractionDTO from "../dtos/postInteraction/GuestPostInteractionDTO"
 import UserPostInteractionDTO from "../dtos/postInteraction/UserPostInteractionDTO"
-import prismaClient from "../utils/prismaClient"
+
 import { InteractionType, Role } from "@prisma/client"
 
 export default class PostInteractionRepository {
@@ -19,11 +22,11 @@ export default class PostInteractionRepository {
      ** If there was a LIKE or VIEW belongs to user or guest it doesn't do anything because
      * it prevents multiple like or view that belongs a user or guest.
      * @param createPostInteractionDTO CreatePostInteractionDTO
-     * @returns Promise <void>
+     * @returns Promise < void >
      * @throws Error
      */
-    private async createInteraction(createPostInteractionDTO: CreatePostInteractionDTO)
-        : Promise<void>
+    private async createInteraction(
+        createPostInteractionDTO: CreatePostInteractionDTO) : Promise<void>
     {
         if (createPostInteractionDTO.type === InteractionType.UNLIKE) {
             const existing = await prismaClient.postInteraction.findFirst({
@@ -106,14 +109,12 @@ export default class PostInteractionRepository {
     /**
      ** Creates post interaction for a guest and increases post's like, view or share counts.
      * (by transaction) 
-     * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE'
-     * @param postId string
-     * @param guestId string
-     * @returns Promise<void>
+     * @param createGuestPostInteractionDTO CreateGuestPostInteractionDTO
+     * @returns Promise < void >
      * @throws Error
      */
-    async createGuestInteraction(createGuestPostInteractionDTO: CreateGuestPostInteractionDTO)
-        :Promise<void>
+    async createGuestInteraction(
+        createGuestPostInteractionDTO: CreateGuestPostInteractionDTO) : Promise<void>
     {
         await this.createInteraction(new CreatePostInteractionDTO(
             createGuestPostInteractionDTO.role,
@@ -127,14 +128,12 @@ export default class PostInteractionRepository {
     /**
      ** Creates post interaction for a user and increases post's like, view or share counts.
      * (by transaction) 
-     * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE'
-     * @param postId string
-     * @param userId string
-     * @returns Promise <void>
+     * @param createUserPostInteractionDTO CreateUserPostInteractionDTO
+     * @returns Promise < void >
      * @throws Error
      */
-    async createUserInteraction(createUserPostInteractionDTO: CreateUserPostInteractionDTO)
-        :Promise<void>
+    async createUserInteraction(
+        createUserPostInteractionDTO: CreateUserPostInteractionDTO) : Promise<void>
     {
         await this.createInteraction(new CreatePostInteractionDTO(
             createUserPostInteractionDTO.role,
@@ -150,7 +149,7 @@ export default class PostInteractionRepository {
      * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE' 
      * @param guestId string
      * @param postId string
-     * @returns Promise <GuestPostInteractionDTO[]>
+     * @returns Promise < GuestPostInteractionDTO[] >
      * @throws Error
      */
     async getGuestInteractions(
@@ -180,7 +179,7 @@ export default class PostInteractionRepository {
      * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE' 
      * @param userId string
      * @param postId string
-     * @returns Promise <UserPostInteractionDTO[]>
+     * @returns Promise < UserPostInteractionDTO[] >
      * @throws Error
      */
     async getUserInteractions(

@@ -1,5 +1,6 @@
 /**
- * @module GuestBookmarkDTO
+ * @module
+ * @class GuestBookmarkDTO
  * To use the fetched guest bookmark object from database.
  */
 

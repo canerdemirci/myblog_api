@@ -1,5 +1,6 @@
 /**
- * @module CreateCommentDTO
+ * @module
+ * @class CreateCommentDTO
  * Used to create post comments in database.
  */
 

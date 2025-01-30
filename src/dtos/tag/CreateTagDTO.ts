@@ -1,5 +1,6 @@
 /**
- * @module CreateTagDTO
+ * @module
+ * @class CreateTagDTO
  * Used to create tag in database.
  */
 

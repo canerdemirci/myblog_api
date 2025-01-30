@@ -1,5 +1,6 @@
 /**
- * @module UpdateCommentDTO
+ * @module
+ * @class UpdateCommentDTO
  * Used to update comment in database.
  */
 

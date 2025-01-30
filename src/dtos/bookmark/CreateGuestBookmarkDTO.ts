@@ -1,5 +1,6 @@
 /**
- * @module CreateGuestBookmarkDTO
+ * @module
+ * @class CreateGuestBookmarkDTO
  * Used to create guest bookmark in database.
  */
 

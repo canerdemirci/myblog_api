@@ -1,5 +1,6 @@
 /**
- * @module RelatedPostDTO
+ * @module
+ * @class RelatedPostDTO
  * To use the fetched related posts comes from database.
  */
 

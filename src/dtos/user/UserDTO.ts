@@ -1,5 +1,6 @@
 /**
- * @module UserDTO
+ * @module
+ * @class UserDTO
  * To use the fetched user object from database.
  */
 

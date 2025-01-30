@@ -1,23 +1,28 @@
 /**
- * @module bookmarkRepository
+ * @module
+ * @class BookmarkRepository
  * This repository used for crud operations at bookmarks.
  */
 
 import prismaClient from "../utils/prismaClient"
-import { Role } from "@prisma/client"
+
 import CreateGuestBookmarkDTO from "../dtos/bookmark/CreateGuestBookmarkDTO"
 import GuestBookmarkDTO from "../dtos/bookmark/GuestBookmarkDTO"
 import CreateUserBookmarkDTO from "../dtos/bookmark/CreateUserBookmarkDTO"
 import UserBookmarkDTO from "../dtos/bookmark/UserBookmarkDTO"
 
+import { Role } from "@prisma/client"
+
 export default class BookmarkRepository {
     /**
      * Creates a guest bookmark with related post and guest.
      * @param createGuestBookmarkDTO CreateGuestBookmarkDTO
-     * @returns Promise < GuestBookmarkDTO >
      * @throws Error
+     * @returns Promise < GuestBookmarkDTO >
      */
-    async createGuestBookmark(createGuestBookmarkDTO: CreateGuestBookmarkDTO): Promise<GuestBookmarkDTO> {
+    async createGuestBookmark(
+        createGuestBookmarkDTO: CreateGuestBookmarkDTO): Promise<GuestBookmarkDTO>
+    {
         const result = await prismaClient.bookmark.create({
             data: {
                 role: Role.GUEST,
@@ -33,10 +38,11 @@ export default class BookmarkRepository {
     /**
      * Creates an user bookmark with related post and guest.
      * @param createUserBookmarkDTO CreateUserBookmarkDTO
-     * @returns Promise < UserBookmarkDTO >
      * @throws Error
+     * @returns Promise < UserBookmarkDTO >
      */
-    async createUserBookmark(createUserBookmarkDTO: CreateUserBookmarkDTO): Promise<UserBookmarkDTO>
+    async createUserBookmark(
+        createUserBookmarkDTO: CreateUserBookmarkDTO): Promise<UserBookmarkDTO>
     {
         const result = await prismaClient.bookmark.create({
             data: {
@@ -52,8 +58,9 @@ export default class BookmarkRepository {
 
     /**
      * Fetches all user bookmarks.
-     * @returns Promise < UserBookmarkDTO[] >
+     * @param userId string
      * @throws Error
+     * @returns Promise < UserBookmarkDTO[] >
      */
     async getUserBookmarks(userId: string): Promise<UserBookmarkDTO[]> {
         const bookmarks = await prismaClient.bookmark.findMany({
@@ -75,8 +82,9 @@ export default class BookmarkRepository {
 
     /**
      * Fetches all guest bookmarks.
-     * @returns Promise < GuestBookmarkDTO[] >
+     * @param guestId string
      * @throws Error
+     * @returns Promise < GuestBookmarkDTO[] >
      */
     async getGuestBookmarks(guestId: string): Promise<GuestBookmarkDTO[]> {
         const bookmarks = await prismaClient.bookmark.findMany({
@@ -100,8 +108,8 @@ export default class BookmarkRepository {
      * Fetches a guest bookmark by postId and guestId
      * @param postId string
      * @param guestId string
-     * @returns GuestBookmarkDTO
      * @throws Error
+     * @returns Promise < GuestBookmarkDTO >
      */
     async getGuestBookmark(postId: string, guestId: string) : Promise<GuestBookmarkDTO> {
         const result = await prismaClient.bookmark.findFirstOrThrow({
@@ -115,8 +123,8 @@ export default class BookmarkRepository {
      * Fetches a user bookmark by postId and userId
      * @param postId string
      * @param userId string
-     * @returns UserBookmarkDTO
      * @throws Error
+     * @returns Promise < UserBookmarkDTO >
      */
     async getUserBookmark(postId: string, userId: string) : Promise<UserBookmarkDTO> {
         const result = await prismaClient.bookmark.findFirstOrThrow({
@@ -129,8 +137,8 @@ export default class BookmarkRepository {
     /**
      * Deletes a bookmark.
      * @param id string
-     * @returns Promise < void >
      * @throws Error
+     * @returns Promise < void >
      */
     async deleteBookmark(id: string): Promise<void> {
         await prismaClient.bookmark.delete({ where: { id: id } })

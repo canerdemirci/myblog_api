@@ -1,5 +1,6 @@
 /**
- * @module noteRepository
+ * @module
+ * @class NoteRepository
  * This repository used for crud operations at notes.
  */
 
@@ -9,10 +10,10 @@ import CreateNoteDTO from "../dtos/note/CreateNoteDTO"
 
 export default class NoteRepository {
     /**
-     * Creates a note.
+     * Creates a note in the database.
      * @param createNoteDTO CreateNoteDTO
-     * @returns Promise<NoteDTO>
      * @throws Error
+     * @returns Promise < NoteDTO >
      */
     async createNote(createNoteDTO: CreateNoteDTO) : Promise<NoteDTO> {
         const note = await prismaClient.note.create({
@@ -23,9 +24,9 @@ export default class NoteRepository {
     }
 
     /**
-     * Fetches all notes
-     * @returns Promise<NoteDTO[]>
+     * Fetches all notes from database.
      * @throws Error
+     * @returns Promise < NoteDTO[] >
      */
     async getNotes() : Promise<NoteDTO[]> {
         const notes = await prismaClient.note.findMany({
@@ -36,10 +37,10 @@ export default class NoteRepository {
     }
 
     /**
-     * Fetches a note by id
+     * Fetches a note by id from database.
      * @param id string
-     * @returns Promise<NoteDTO>
      * @throws Error
+     * @returns Promise < NoteDTO | never >
      */
     async getNote(id: string) : Promise<NoteDTO | never> {
         const note = await prismaClient.note.findFirstOrThrow({
@@ -50,18 +51,18 @@ export default class NoteRepository {
     }
 
     /**
-     * Deletes a note by id
+     * Deletes a note by id from database.
      * @param id string
-     * @returns Promise<void>
      * @throws Error
+     * @returns Promise < void >
      */
     async deleteNote(id: string) : Promise<void> {
         await prismaClient.note.delete({ where: { id: id } })
     }
 
     /**
-     * This function fetchs all note content images
-     * If an error occurs it throws.
+     * Fetchs all note content images from database.
+     * @throws Error
      * @returns Promise < string[] >
      */
     async getNoteImagesList() : Promise<string[]> {

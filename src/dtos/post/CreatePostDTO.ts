@@ -1,5 +1,6 @@
 /**
- * @module CreatePostDTO
+ * @module
+ * @class CreatePostDTO
  * Used to create post in database.
  */
 

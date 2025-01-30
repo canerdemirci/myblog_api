@@ -1,9 +1,11 @@
+/**
+ * @module
+ * @class UpdatePostDTO
+ * Used to update user in database.
+*/
+
 import { body } from "express-validator"
 
-/**
- * @module UpdateUserDTO
- * Used to update user in database.
- */
 export default class UpdatePostDTO {
     protected _id: string
     protected _name?: string

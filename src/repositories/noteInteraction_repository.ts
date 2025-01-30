@@ -1,14 +1,17 @@
 /**
- * @module noteInteractionRepository
+ * @module
+ * @class NoteInteractionRepository
  * This repository used for note interactions.
  */
+
+import prismaClient from "../utils/prismaClient"
 
 import CreateGuestNoteInteractionDTO from "../dtos/noteInteraction/CreateGuestNoteInteractionDTO"
 import CreateNoteInteractionDTO from "../dtos/noteInteraction/CreateNoteInteractionDTO"
 import CreateUserNoteInteractionDTO from "../dtos/noteInteraction/CreateUserNoteInteractionDTO"
 import GuestNoteInteractionDTO from "../dtos/noteInteraction/GuestNoteInteractionDTO"
 import UserNoteInteractionDTO from "../dtos/noteInteraction/UserNoteInteractionDTO"
-import prismaClient from "../utils/prismaClient"
+
 import { InteractionType, Role } from "@prisma/client"
 
 export default class NoteInteractionRepository {
@@ -19,11 +22,11 @@ export default class NoteInteractionRepository {
      ** If there was a LIKE or VIEW belongs to user or guest it doesn't do anything because
      * it prevents multiple like or view that belongs a user or guest.
      * @param createNoteInteractionDTO CreateNoteInteractionDTO
-     * @returns Promise <void>
      * @throws Error
+     * @returns Promise < void >
      */
-    private async createInteraction(createNoteInteractionDTO: CreateNoteInteractionDTO)
-        : Promise<void>
+    private async createInteraction(
+        createNoteInteractionDTO: CreateNoteInteractionDTO) : Promise<void>
     {
         if (createNoteInteractionDTO.type === InteractionType.UNLIKE) {
             const existing = await prismaClient.noteInteraction.findFirst({
@@ -106,14 +109,12 @@ export default class NoteInteractionRepository {
     /**
      ** Creates note interaction for a guest and increases note's like, view or share counts.
      * (by transaction) 
-     * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE'
-     * @param noteId string
-     * @param guestId string
-     * @returns Promise<void>
+     * @param createGuestNoteInteractionDTO CreateGuestNoteInteractionDTO
+     * @returns Promise < void >
      * @throws Error
      */
-    async createGuestInteraction(createGuestNoteInteractionDTO: CreateGuestNoteInteractionDTO)
-        :Promise<void>
+    async createGuestInteraction(
+        createGuestNoteInteractionDTO: CreateGuestNoteInteractionDTO) : Promise<void>
     {
         await this.createInteraction(new CreateNoteInteractionDTO(
             createGuestNoteInteractionDTO.role,
@@ -127,14 +128,12 @@ export default class NoteInteractionRepository {
     /**
      ** Creates note interaction for a user and increases note's like, view or share counts.
      * (by transaction) 
-     * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE'
-     * @param noteId string
-     * @param userId string
-     * @returns Promise <void>
+     * @param createUserNoteInteractionDTO CreateUserNoteInteractionDTO
+     * @returns Promise < void >
      * @throws Error
      */
-    async createUserInteraction(createUserNoteInteractionDTO: CreateUserNoteInteractionDTO)
-        :Promise<void>
+    async createUserInteraction(
+        createUserNoteInteractionDTO: CreateUserNoteInteractionDTO) : Promise<void>
     {
         await this.createInteraction(new CreateNoteInteractionDTO(
             createUserNoteInteractionDTO.role,
@@ -150,7 +149,7 @@ export default class NoteInteractionRepository {
      * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE' 
      * @param guestId string
      * @param noteId string
-     * @returns Promise <GuestNoteInteractionDTO[]>
+     * @returns Promise < GuestNoteInteractionDTO[] >
      * @throws Error
      */
     async getGuestInteractions(
@@ -180,7 +179,7 @@ export default class NoteInteractionRepository {
      * @param type InteractionType - 'VIEW' | 'LIKE' | 'UNLIKE' | 'SHARE' 
      * @param userId string
      * @param noteId string
-     * @returns Promise <UserNoteInteractionDTO[]>
+     * @returns Promise < UserNoteInteractionDTO[] >
      * @throws Error
      */
     async getUserInteractions(

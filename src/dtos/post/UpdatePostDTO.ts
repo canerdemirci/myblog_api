@@ -1,5 +1,6 @@
 /**
- * @module UpdatePostDTO
+ * @module
+ * @class UpdatePostDTO
  * Used to update post in database.
  */
 

@@ -1,14 +1,13 @@
 /**
  * @module
- * @class PostController
  * Authorization, Sanitizing, Validation and Error handling made in routers by middlewares.
  *----------------------------------------------------------------------------------------------
  * * GET:       /posts                              - Get posts by optional pagination and tag
  * * GET:       /posts/:id                          - Get a post by id
  * * GET:       /posts/search/:query                - Get posts by search query
  * * GET:       /posts/tag/:tag                     - Get posts of a tag
- * * GET:       /posts/interactions/guest           - Get guest interactions
- * * GET:       /posts/interactions/user            - Get user interactions
+ * * GET:       /posts/interactions/guest?type&guestId&postId       - Get guest interactions
+ * * GET:       /posts/interactions/user?type&userId&postId         - Get user interactions
  * * GET:       /posts/maintenance/unused-covers    - Get unused post covers
  * * GET:       /posts/maintenance/unused-images    - Get unused post images
  * * POST:      /posts                              - Creates a post
@@ -355,27 +354,23 @@ const updatePost = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * * Acquires from REQUEST PARAMS: id
- * * Deletes a post from database by id
- * * SENDS: 204 No Content
- * @throws 401 Unauthorized
- * @throws 400 Bad request - Validation error
- * @throws 404 Not found
- * @throws 500 Internal server error
- */
-/**
  * * Deletes a post.
  * * REQUEST: DELETE - id - Path
  * * RESPONSE: 204 No content
  * @throws 401 Unauthorized
  * @throws 400 Bad request
+ * @throws 404 Not found
  * @throws 500 Internal server error
  */
 const deletePost = asyncHandler(async (req: Request, res: Response) => {
     const id: string = req.params.id
 
-    await postRepo.deletePost(id)
-    status204NoContent(res)
+    try {
+        await postRepo.deletePost(id)
+        status204NoContent(res)
+    } catch (err) {
+        throw new ApiError(404, 'Post not found with given id')
+    }
 })
 
 export {

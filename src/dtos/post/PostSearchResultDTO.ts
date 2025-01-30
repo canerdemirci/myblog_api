@@ -1,5 +1,6 @@
 /**
- * @module PostSearchResultDTO
+ * @module
+ * @class PostSearchResultDTO
  * To use the fetched post search results from database.
  */
 
