@@ -9,11 +9,10 @@
  * * GET:       /users/search?email&password                - Get a user by email and password
  * * POST:      /users                                      - Creates a user
  * * PUT:       /users                                      - Updates a user
- * * DELETE:    /users/:id                                  - Deletes a user by id
  */
 
 import asyncHandler from 'express-async-handler'
-import { cacher } from '../utils/cacher'
+import { cacher, delCacheKeys } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -26,7 +25,11 @@ import UserDTO from '../dtos/user/UserDTO'
 import UserRepository from '../repositories/user_repository'
 
 import { Request, Response } from 'express'
-import { CreateUserReqBody, GetUserEmailAndPasswordReqQuery, UpdateUserReqBody } from '../types/user'
+import {
+    CreateUserReqBody,
+    GetUserEmailAndPasswordReqQuery,
+    UpdateUserReqBody
+} from '../types/user'
 
 const userRepo = new UserRepository()
 
@@ -39,13 +42,13 @@ const userRepo = new UserRepository()
  * @throws 500 Internal server error
  */
 const getUsers = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'users'
+    const chacheKey = 'user-all'
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const usersData = await userRepo.getUsers()
         const users = usersData.map((u: UserDTO) => u.toObject())
-        cacher.set(chacheKey, users, 300)
+        cacher.set(chacheKey, users, 60 * 60)
         status200Ok(res).json(users)
     } else {
         status200Ok(res).json(chacedData)
@@ -155,6 +158,7 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
         email, name, image, hashedPassword, provider, providerId)
     const user = await userRepo.createUser(createUserDTO)
     const userJson = user.toObject()
+    delCacheKeys(['user-'])
     status201CreatedWithLocation(res, `${apiUrls.users}/${userJson.id}`).json(userJson)
 })
 
@@ -170,27 +174,8 @@ const updateUser = asyncHandler(async (req: Request, res: Response) => {
     const { id, image, name } : UpdateUserReqBody = req.body
     const updateUserDTO = new UpdateUserDTO(id, name, image)
     await userRepo.updateUser(updateUserDTO.id, updateUserDTO.image, updateUserDTO.name)
+    delCacheKeys(['user-'])
     status204NoContent(res)
-})
-
-/**
- * * Deletes a user by id from database
- * * REQUEST: PUT - id - Path
- * * RESPONSE: 204 No content
- * @throws 401 Unauthorized
- * @throws 400 Bad request
- * @throws 404 Not found
- * @throws 500 Internal server error
- */
-const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-    const id: string = req.params.id
-
-    try {
-        await userRepo.deleteUser(id)
-        status204NoContent(res)
-    } catch (err) {
-        throw new ApiError(404, 'User not found with given id')
-    }
 })
 
 export {
@@ -200,6 +185,5 @@ export {
     getUserByProviderId,
     getUserByEmailAndPassword,
     createUser,
-    updateUser,
-    deleteUser
+    updateUser
 }

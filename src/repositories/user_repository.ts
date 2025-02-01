@@ -122,14 +122,4 @@ export default class UserRepository {
             }
         })
     }
-
-    /**
-     * Deletes a users by id from database.
-     * @param id string 
-     * @throws Error
-     * @returns Promise < void >
-     */
-    async deleteUser(id: string) : Promise<void> {
-        await prismaClient.user.delete({ where: { id: id } })
-    }
 }

@@ -10,7 +10,6 @@
  * * GET:       /users/search?email&password                - Get a user by email and password
  * * POST:      /users                                      - Creates a user
  * * PUT:       /users                                      - Updates a user
- * * DELETE:    /users/:id                                  - Deletes a user by id
  */
 
 import express, { Router } from 'express'
@@ -24,8 +23,7 @@ import {
     getUserByEmailAndPassword,
     getUserByProviderId,
     createUser,
-    updateUser,
-    deleteUser
+    updateUser
 } from '../controllers/user_controller'
 
 import UserDTO from '../dtos/user/UserDTO'
@@ -78,14 +76,6 @@ userRouter.put(
     UpdateUserDTO.validationAndSanitizationSchema(),
     validationErrorMiddleware,
     updateUser
-)
-// DELETE: /users/:id - Deletes a user by id
-userRouter.delete(
-    '/:id',
-    authMiddleware,
-    UserDTO.validationAndSanitizationSchema(),
-    validationErrorMiddleware,
-    deleteUser
 )
 
 export default userRouter

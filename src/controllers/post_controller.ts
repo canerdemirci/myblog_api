@@ -19,7 +19,7 @@
  */
 
 import asyncHandler from 'express-async-handler'
-import { cacher } from '../utils/cacher'
+import { cacher, delCacheKeys } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -77,8 +77,8 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
 
     const chacheKey =
         (takeNumber && skipNumber)
-            ? (`posts-${takeNumber}-${skipNumber}` + (!tagId ? '' : `-${tagId}`))
-            : ('posts' + (!tagId ? '' : `-${tagId}`))
+            ? (`post-${takeNumber}-${skipNumber}` + (!tagId ? '' : `-${tagId}`))
+            : ('post-' + (!tagId ? 'all' : `-${tagId}`))
 
     const chacedData = cacher.get(chacheKey)
 
@@ -89,7 +89,7 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
                 : await postRepo.getPosts(undefined, tagId)
                 
         const posts = postsData.map((p: PostDTO) => p.toObject())
-        cacher.set(chacheKey, posts, 300)
+        cacher.set(chacheKey, posts, 60 * 60 * 24 * 7)
         status200Ok(res).json(posts)
     } else {
         status200Ok(res).json(chacedData)
@@ -115,7 +115,7 @@ const getPost = asyncHandler(async (req: Request, res: Response) => {
         try {
             const postData = await postRepo.getPost(id)
             const post = postData.toObject()
-            cacher.set(chacheKey, post, 300)
+            cacher.set(chacheKey, post, 60 * 60 * 24 * 7)
             status200Ok(res).json(post)
         } catch (err) {
             throw new ApiError(404, 'Post not found with given id')
@@ -152,13 +152,13 @@ const getPostSearchResults = asyncHandler(async (req: Request, res: Response) =>
 const getPostsOfTag = asyncHandler(async (req: Request, res: Response) => {
     const tag: string = req.params.tag
 
-    const chacheKey = 'postsoftag-' + tag
+    const chacheKey = 'post-oftag-' + tag
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const postsData = await postRepo.getPostsOfTag(tag)
         const posts = postsData.map((p: PostOfTagDTO) => p.toObject())
-        cacher.set(chacheKey, posts, 300)
+        cacher.set(chacheKey, posts, 60 * 60 * 24 * 7)
         status200Ok(res).json(posts)
     } else {
         status200Ok(res).json(chacedData)
@@ -269,6 +269,7 @@ const createPost = asyncHandler(async (req: Request, res: Response) => {
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     const post = await postRepo.createPost(createPostDTO, createTagDTOS)
     const postJson = post.toObject()
+    delCacheKeys(['post-'])
     status201CreatedWithLocation(res, `${apiUrls.posts}/${postJson.id}`).json(postJson)
 })
 
@@ -283,9 +284,17 @@ const createPost = asyncHandler(async (req: Request, res: Response) => {
 const getRelatedPosts = asyncHandler(async (req: Request, res: Response) => {
     const { tags } : GetRelatedPostsReqBody = req.body
 
-    const postsData = await postRepo.getRelatedPosts(tags)
-    const posts = postsData.map((p: RelatedPostDTO) => p.toObject())
-    status200Ok(res).json(posts)
+    const chacheKey = 'post-related-' + tags.join('-')
+    const chacedData = cacher.get(chacheKey)
+
+    if (!chacedData) {
+        const postsData = await postRepo.getRelatedPosts(tags)
+        const posts = postsData.map((p: RelatedPostDTO) => p.toObject())
+        cacher.set(chacheKey, posts, 60 * 60 * 24 * 7)
+        status200Ok(res).json(posts)
+    } else {
+        status200Ok(res).json(chacedData)
+    }
 })
 
 /**
@@ -350,6 +359,7 @@ const updatePost = asyncHandler(async (req: Request, res: Response) => {
     const updatePostDTO = new UpdatePostDTO(id, title, images, content, description, cover)
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     await postRepo.updatePost(updatePostDTO, createTagDTOS)
+    delCacheKeys(['post-'])
     status204NoContent(res)
 })
 
@@ -367,6 +377,7 @@ const deletePost = asyncHandler(async (req: Request, res: Response) => {
 
     try {
         await postRepo.deletePost(id)
+        delCacheKeys(['post-'])
         status204NoContent(res)
     } catch (err) {
         throw new ApiError(404, 'Post not found with given id')

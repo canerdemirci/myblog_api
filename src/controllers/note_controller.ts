@@ -16,7 +16,7 @@
 
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { cacher } from '../utils/cacher'
+import { cacher, delCacheKeys } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -46,13 +46,13 @@ const noteInteractionRepo = new NoteInteractionRepository()
  * @throws 500 Internal server error
  */
 const getNotes = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'notes'
+    const chacheKey = 'note-all'
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const notesData = await noteRepo.getNotes()
         const notes = notesData.map((n: NoteDTO) => n.toObject())
-        cacher.set(chacheKey, notes, 300)
+        cacher.set(chacheKey, notes, 60 * 60 * 24 * 7)
         status200Ok(res).json(notes)
     } else {
         status200Ok(res).json(chacedData)
@@ -78,7 +78,7 @@ const getNote = asyncHandler(async (req: Request, res: Response) => {
         try {
             const noteData = await noteRepo.getNote(id)
             const note = noteData.toObject()
-            cacher.set(chacheKey, note, 300)
+            cacher.set(chacheKey, note, 60 * 60 * 24 * 7)
             status200Ok(res).json(note)
         } catch (err) {
             throw new ApiError(404, 'Note not found with given id')
@@ -159,6 +159,7 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
     const createNoteDTO = new CreateNoteDTO(content, images)
     const note = await noteRepo.createNote(createNoteDTO)
     const noteJson = note.toObject()
+    delCacheKeys(['note-all'])
     status201CreatedWithLocation(res, `${apiUrls.notes}/${noteJson.id}`).json(noteJson)
 })
 
@@ -215,6 +216,7 @@ const deleteNote = asyncHandler(async (req: Request, res: Response) => {
 
     try {
         await noteRepo.deleteNote(id)
+        delCacheKeys(['note-'])
         status204NoContent(res)
     } catch (err) {
         throw new ApiError(404, 'Note not found with given id')

@@ -99,7 +99,8 @@ export default class PostRepository {
 
     /**
      * Fetches posts from database by optional pagination and tag id.
-     * @param pagination { take: number, skip: number }
+     * @param pagination.take number
+     * @param pagination.skip number
      * @param byTagId string
      * @throws Error
      * @returns Promise < PostDTO[] >

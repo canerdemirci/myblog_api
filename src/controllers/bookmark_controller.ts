@@ -12,7 +12,7 @@
  */
 
 import asyncHandler from 'express-async-handler'
-import { cacher } from '../utils/cacher'
+import { cacher, delCacheKeys } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -40,13 +40,13 @@ const bookmarkRepo = new BookmarkRepository()
 const getGuestBookmarks = asyncHandler(async (req: Request, res: Response) => {
     const guestId = req.params.guestId as string
     
-    const chacheKey = 'guestbookmarks-' + guestId
+    const chacheKey = 'bookmark-guest-all-' + guestId
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const bookmarksData = await bookmarkRepo.getGuestBookmarks(guestId + '-' + req.ip)
         const bookmarks = bookmarksData.map((b: GuestBookmarkDTO) => b.toObject())
-        cacher.set(chacheKey, bookmarks, 300)
+        cacher.set(chacheKey, bookmarks, 60 * 60 * 24 * 7)
         status200Ok(res).json(bookmarks)
     } else {
         status200Ok(res).json(chacedData)
@@ -64,13 +64,13 @@ const getGuestBookmarks = asyncHandler(async (req: Request, res: Response) => {
 const getUserBookmarks = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.params.userId as string
     
-    const chacheKey = 'userbookmarks-' + userId
+    const chacheKey = 'bookmark-user-all-' + userId
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const bookmarksData = await bookmarkRepo.getUserBookmarks(userId)
         const bookmarks = bookmarksData.map((b: UserBookmarkDTO) => b.toObject())
-        cacher.set(chacheKey, bookmarks, 300)
+        cacher.set(chacheKey, bookmarks, 60 * 60 * 24 * 7)
         status200Ok(res).json(bookmarks)
     } else {
         status200Ok(res).json(chacedData)
@@ -89,13 +89,14 @@ const getUserBookmarks = asyncHandler(async (req: Request, res: Response) => {
 const getGuestBookmark = asyncHandler(async (req: Request, res: Response) => {
     const { postId, guestId } = req.query as GetGuestBookmarkReqQuery
 
-    const chacheKey = 'guest-bookmark-' + guestId + '-' + postId
+    const chacheKey = 'bookmark-guest-' + guestId + '-' + postId
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         try {
             const bookmark = await bookmarkRepo.getGuestBookmark(postId, guestId + '-' + req.ip)
             const bookmarkJson = bookmark.toObject()
+            cacher.set(chacheKey, bookmarkJson, 60 * 60 * 24 * 7)
             status200Ok(res).json(bookmarkJson)
         } catch (_) {
             throw new ApiError(404, 'Bookmark not found with given id')
@@ -117,13 +118,14 @@ const getGuestBookmark = asyncHandler(async (req: Request, res: Response) => {
 const getUserBookmark = asyncHandler(async (req: Request, res: Response) => {
     const { postId, userId } = req.query as GetUserBookmarkReqQuery
 
-    const chacheKey = 'user-bookmark-' + userId + '-' + postId
+    const chacheKey = 'bookmark-user-' + userId + '-' + postId
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         try {
             const bookmark = await bookmarkRepo.getUserBookmark(postId, userId)
             const bookmarkJson = bookmark.toObject()
+            cacher.set(chacheKey, bookmarkJson, 60 * 60 * 24 * 7)
             status200Ok(res).json(bookmarkJson)
         } catch (_) {
             throw new ApiError(404, 'Bookmark not found with given id')
@@ -146,6 +148,7 @@ const createGuestBookmark = asyncHandler(async (req: Request, res: Response) => 
     const createDTO = new CreateGuestBookmarkDTO(postId, guestId + '-' + req.ip)
     const bookmark = await bookmarkRepo.createGuestBookmark(createDTO)
     const bookmarkJson = bookmark.toObject()
+    delCacheKeys(['bookmark-guest-'])
     status201CreatedWithLocation(res, `${apiUrls.bookmarks}/${bookmarkJson.id}`).json(bookmarkJson)
 })
 
@@ -162,6 +165,7 @@ const createUserBookmark = asyncHandler(async (req: Request, res: Response) => {
     const createDTO = new CreateUserBookmarkDTO(postId, userId)
     const bookmark = await bookmarkRepo.createUserBookmark(createDTO)
     const bookmarkJson = bookmark.toObject()
+    delCacheKeys(['bookmark-user-'])
     status201CreatedWithLocation(res, `${apiUrls.bookmarks}/${bookmarkJson.id}`).json(bookmarkJson)
 })
 
@@ -179,6 +183,7 @@ const deleteBookmark = asyncHandler(async (req: Request, res: Response) => {
 
     try {
         await bookmarkRepo.deleteBookmark(id)
+        delCacheKeys(['bookmark'])
         status204NoContent(res)
     } catch (err) {
         throw new ApiError(404, 'Bookmark not found with given id')

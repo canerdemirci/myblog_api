@@ -12,7 +12,6 @@ import errorHandler, { ApiError, validationErrorMiddleware }
     from './middleware/error' // error handler middleware function
 import morganMiddleware from './middleware/morgan' // middleware for logging requests
 import logger from './utils/logger' // winston logger
-import { cacher } from './utils/cacher'
 import swaggerUi, { JsonObject } from 'swagger-ui-express' // API documentation package
 import YAML from 'yaml' // For creating swagger documentation (swagger content)
 import fs from 'fs' // For reading swagger yaml file
@@ -118,14 +117,6 @@ app.use(express.json())
 // Use urlencoded middleware: Automatically parses URL-encoded request bodies and assigns the
 // parsed data to the req.body property of the request object. (Form data)
 app.use(express.urlencoded({ extended: false }))
-// If the request isn't a GET flush all chached data
-app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.method !== 'GET') {
-        cacher.flushAll()
-    }
-
-    next()
-})
 // Static serve /uploads for blog's images, files.
 app.use(apiUrls.static, express.static(path.join(__dirname, '../uploads')))
 // File uploads

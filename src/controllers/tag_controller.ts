@@ -10,7 +10,7 @@
 
 import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
-import { cacher } from '../utils/cacher'
+import { cacher, delCacheKeys } from '../utils/cacher'
 import { apiUrls } from '../constants'
 import { status200Ok, status201CreatedWithLocation, status204NoContent } from './responses'
 import { ApiError } from '../middleware/error'
@@ -30,13 +30,13 @@ const tagRepo = new TagRepository()
  * @throws 500 Internal server error
  */
 const getTags = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'tags'
+    const chacheKey = 'tag-all'
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const tagsData = await tagRepo.getTags()
         const tags = tagsData.map((t: TagDTO) => t.toObject())
-        cacher.set(chacheKey, tags, 300)
+        cacher.set(chacheKey, tags, 60 * 60 * 24 * 7)
         status200Ok(res).json(tags)
     } else {
         status200Ok(res).json(chacedData)
@@ -62,7 +62,7 @@ const getTag = asyncHandler(async (req: Request, res: Response) => {
         try {
             const tagData = await tagRepo.getTag(id)
             const tag = tagData.toObject()
-            cacher.set(chacheKey, tag, 300)
+            cacher.set(chacheKey, tag, 60 * 60 * 24 * 7)
             status200Ok(res).json(tag)
         } catch (err) {
             throw new ApiError(404, 'Tag not found with given id')
@@ -85,6 +85,7 @@ const createTag = asyncHandler(async (req: Request, res: Response) => {
     const createTagDTO = new CreateTagDTO(name)
     const tag = await tagRepo.createTag(createTagDTO)
     const tagJson = tag.toObject()
+    delCacheKeys(['tag-'])
     status201CreatedWithLocation(res, `${apiUrls.tags}/${tagJson.id}`).json(tagJson)
 })
 
@@ -102,6 +103,7 @@ const deleteTag = asyncHandler(async (req: Request, res: Response) => {
 
     try {
         await tagRepo.deleteTag(id)
+        delCacheKeys(['tag-'])
         status204NoContent(res)
     } catch (err) {
         throw new ApiError(404, 'Tag not found with given id')

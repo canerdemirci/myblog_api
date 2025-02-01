@@ -10,6 +10,7 @@ import { status400BadRequest } from '../controllers/responses'
 
 /**
  * Custom Error for the Api
+ * @class ApiError
  * @property statusCode
  */
 export class ApiError extends Error {
@@ -23,8 +24,8 @@ export class ApiError extends Error {
 }
 
 /**
- * Error handling function. This function send response
- * with error info ({ success: boolean, message: string, stack: string }) and
+ * Error handling middleware. This function send response
+ * with error info (\{ success: boolean, message: string, stack: string \}) and
  * log error info same way.
  * If error is
  * - ApiError: statusCode = Error's status code

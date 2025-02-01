@@ -1312,32 +1312,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
-  /users/{id}:
-    delete:
-      tags:
-        - Users
-      summary: "Deletes a user by given id"
-      description: "Deletes a user by given id"
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: "User id"
-          schema:
-            type: string
-        - $ref: "#/components/parameters/x-admin-token"
-      responses:
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "204":
-          description: "No Content"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/ServerError"
-
   /users/search:
     get:
       tags:
