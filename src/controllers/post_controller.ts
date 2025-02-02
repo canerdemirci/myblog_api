@@ -68,23 +68,22 @@ const getPosts = asyncHandler(async (req: Request, res: Response) => {
 
     const takeNumber = take ? (isNaN(parseInt(take)) ? undefined : parseInt(take)) : undefined
     const skipNumber = skip ? (isNaN(parseInt(skip)) ? undefined : parseInt(skip)) : undefined
-
-    if (takeNumber && skipNumber) {
+    if (takeNumber !== undefined && skipNumber !== undefined) {
         if (takeNumber < 1 || skipNumber < 0) {
             throw new ApiError(400, 'Invalid take or skip number')
         }
     }
-
+    
     const chacheKey =
-        (takeNumber && skipNumber)
+        (takeNumber !== undefined && skipNumber !== undefined)
             ? (`post-${takeNumber}-${skipNumber}` + (!tagId ? '' : `-${tagId}`))
             : ('post-' + (!tagId ? 'all' : `-${tagId}`))
-
+    
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
         const postsData =
-            (takeNumber && skipNumber)
+            (takeNumber !== undefined && skipNumber !== undefined)
                 ? await postRepo.getPosts({ take: takeNumber, skip: skipNumber }, tagId)
                 : await postRepo.getPosts(undefined, tagId)
                 
