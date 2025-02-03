@@ -1,3 +1,7 @@
+/**
+ * Not used anymore
+ */
+
 import prismaClient from '../src/utils/prismaClient'
 
 async function main() {

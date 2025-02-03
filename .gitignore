@@ -1,6 +1,5 @@
 .env
 node_modules/
-logs/
 docs/
 Project Technical Documentation/
 uploads/
