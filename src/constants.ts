@@ -6,6 +6,8 @@ export const apiUrls = {
     comments: '/api/comments',
     bookmarks: '/api/bookmarks',
     users: '/api/users',
+    statistics: '/api/statistics',
+    addnewguestip: '/api/statistics/addnewguestip',
     docs: '/api-docs',
     static: '/api/static',
     upload: '/api/upload',

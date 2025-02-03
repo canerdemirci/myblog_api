@@ -1427,6 +1427,49 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
+  /statistics:
+    get:
+      tags:
+        - Statistics
+      summary: Retrievies statistics about the blog
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/BlogStatistics"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /statistics/addnewguestip/{ip}:
+    get:
+      tags:
+        - Statistics
+      summary: Adds a guest ip address to the database
+      parameters:
+        - in: path
+          name: ip
+          required: true
+          description: "ip adress"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+
   /upload:
     post:
       tags:
@@ -2414,7 +2457,56 @@ components:
         - email
         - createdAt
         - updatedAt
-
+      
+    BlogStatistics:
+      type: object
+      properties:
+        postCount:
+          type: number
+          description: "Total post count"
+        noteCount:
+          type: number
+          description: "Total note count"
+        userCount:
+          type: number
+          description: "Total user count"
+        guestCount:
+          type: number
+          description: "Total guest count"
+        tagCount:
+          type: number
+          description: "Total tag count"
+        postCommentCount:
+          type: number
+          description: "Total post comment count"
+        postLikeCount:
+          type: number
+          description: "Total post like count"
+        postShareCount:
+          type: number
+          description: "Total post share count"
+        postViewCount:
+          type: number
+          description: "Total post view count"
+        noteLikeCount:
+          type: number
+          description: "Total note like count"
+        noteShareCount:
+          type: number
+          description: "Total note share count"
+        noteViewCount:
+          type: number
+          description: "Total note view count"
+        distributionOfPostsByTags:
+          type: number
+          description: "Distrubution of posts by tags"
+        distributionOfUsersByMonths:
+          type: number
+          description: "Distrubution of users by months"
+        distributionOfGuestsByMonths:
+          type: number
+          description: "Distrubution of guests by months"
+        
     # Response Schemas ----------------------------------------------------------------
     ErrorResponse:
       type: object

@@ -26,6 +26,7 @@ import basicUid from './utils/basicuid'
 import userRouter from './routes/users'
 import commentRouter from './routes/comments'
 import bookmarkRouter from './routes/bookmarks'
+import statisticsRouter from './routes/statistics'
 
 // Load .env file constants and create express app
 dotenv.config()
@@ -220,6 +221,8 @@ app.use(apiUrls.users, userRouter)
 app.use(apiUrls.comments, commentRouter)
 // bookmark router
 app.use(apiUrls.bookmarks, bookmarkRouter)
+// statistics router
+app.use(apiUrls.statistics, statisticsRouter)
 // API documentation route
 app.use(apiUrls.docs, swaggerUi.serve, swaggerUi.setup(swaggerDocument as JsonObject))
 // Logging middleware with morgan
