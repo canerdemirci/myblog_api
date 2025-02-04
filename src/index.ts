@@ -108,7 +108,7 @@ app.use(cors({
         'http://localhost:3000',
         'http://192.168.1.101:3000',
         'http://192.168.1.112:3000',
-        'https://square-danyette-canerdemirci-63378b97.koyeb.app/'
+        'https://square-danyette-canerdemirci-63378b97.koyeb.app:8000'
     ],
 }))
 // Only I can use this api with an api key
