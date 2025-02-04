@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon ./src/index.ts",
     "start": "tsx ./src/index.ts",
-    "build": "prisma migrate reset && prisma migrate deploy",
+    "build": "npm install && npm run migrate",
+    "migrate": "npx prisma migrate deploy",
     "doc": "npx typedoc --options typedoc.json"
   },
   "prisma": {
