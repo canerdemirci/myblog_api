@@ -12,6 +12,8 @@ servers:
     description: "Development Server"
   - url: "http://192.168.1.101:8000/api"
     description: "Production Server"
+  - url: "https://square-danyette-canerdemirci-63378b97.koyeb.app/api"
+    description: "Production Server"
 security:
   - ApiKeyAuth: []
 paths:
