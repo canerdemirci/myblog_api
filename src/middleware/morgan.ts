@@ -1,5 +1,5 @@
 /**
- * @module morganMiddleware
+ * @module
  * For logging requests with morgan and winston
  */
 

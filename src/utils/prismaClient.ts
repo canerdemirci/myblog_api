@@ -1,5 +1,5 @@
 /**
- * @module prismaClient
+ * @module
  * For using prisma orm database functions.
  */
 

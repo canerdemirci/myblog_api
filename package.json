@@ -10,7 +10,7 @@
     "migrate": "npx prisma migrate deploy",
     "doc": "npx typedoc --options typedoc.json"
   },
-  "author": "",
+  "author": "Caner DEMİRCİ",
   "license": "ISC",
   "devDependencies": {
     "@types/compression": "^1.7.5",

@@ -1,5 +1,5 @@
 /**
- * @module logger
+ * @module
  * For logging with winston package.
  */
 
@@ -22,7 +22,7 @@ const levels = {
  * the current NODE_ENV: show all the log levels
  * if the server was run in development mode otherwise,
  * if it was run in production, show only warn and error messages.
- * @returns {string}
+ * @returns string
  */
 const level = () : string => {
     const env = process.env.NODE_ENV || 'development'

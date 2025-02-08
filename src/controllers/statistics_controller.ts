@@ -10,7 +10,7 @@ import { Request, Response } from 'express'
 import asyncHandler from 'express-async-handler'
 import { status200Ok } from './responses'
 
-import StatisticsRepository from '../repositories/statistics'
+import StatisticsRepository from '../repositories/statistics_repository'
 
 const statisticsRepository = new StatisticsRepository()
 

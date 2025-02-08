@@ -1,0 +1,73 @@
+# Folder Structure
+
+![Screenshot 2025-02-06 at 15.01.47.png](Folder%20Structure%20192a4b25fe518077a1aedc2fd4c2d649/Screenshot_2025-02-06_at_15.01.47.png)
+
+- **./ (root):**
+    - typedoc.json
+    - tsdoc.json
+    - tsconfig.json
+    - package.json
+    - package-lock.json
+    - .env
+    - .gitignore
+    - LICENSE
+    - README.md
+- **docs:** Code documentation
+- **logs:** Log files stored here.
+- **prisma:** Prisma schema, migration files and seeding files stored here.
+- **swagger:** Swagger yaml file stored here.
+- **uploads:** Post cover photos, content images, note content images and user profile photos stored here.
+    - **images_of_notes:** Note content images
+    - **images_of_posts:** Post content images
+    - **user_avatars:** User profile photos
+- **src:** Source codes are here.
+    - **controllers:** Functions that handle incoming requests and generate appropriate responses.
+        - **bookmark_controller.ts**
+        - **comment_controller.ts**
+        - **note_controller.ts**
+        - **post_controller.ts**
+        - **tag_controller.ts**
+        - **user_controller.ts**
+        - **statistics_controller.ts**
+        - **responses.ts**
+    - **dtos:** Data transfer objects (classes) are here.
+        - **bookmark**
+        - **comment**
+        - **note**
+        - **noteInteraction**
+        - **post**
+            - **CreatePostDTO**
+            - **UpdatePostDTO**
+            - **PostDTO**
+            - **RelatedPostDTO**
+            - **PostOfTagDTO**
+            - **PostSearchResultDTO**
+        - **postInteraction**
+        - **tag**
+        - **user**
+    - **middleware:** Express middlewares like authentication, logging, error handling, rate limiting.
+        - **auth.ts**
+        - **error.ts**
+        - **limiter.ts**
+        - **morgan.ts**
+    - **repositories:** There are repository classes here that do database operations like retrieving datas, creating, updating, deleting by using prisma client.
+    - **routes:** Express routers.
+        - **posts.ts**
+        - **notes.ts**
+        - **tags.ts**
+        - **users.ts**
+        - **statistics.ts**
+        - **bookmarks.ts**
+        - **comments.ts**
+    - **types:** Typescript types that used in app.
+        - **post.d.ts**
+        - **note.d.ts**
+        - **user.d.ts**
+    - **utils:** There are utility functions and modules here.
+        - **basicuid.ts**
+        - **cacher.ts**
+        - **jwt.ts**
+        - **logger.ts**
+        - **prismaClient.ts**
+    - **constants.ts:** There are constants here like api route paths.
+    - **index.ts:** App’s entry point, main file.
