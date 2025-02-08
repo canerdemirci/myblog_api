@@ -159,7 +159,7 @@ const createNote = asyncHandler(async (req: Request, res: Response) => {
     const createNoteDTO = new CreateNoteDTO(content, images)
     const note = await noteRepo.createNote(createNoteDTO)
     const noteJson = note.toObject()
-    delCacheKeys(['note-all'])
+    delCacheKeys(['note-'])
     status201CreatedWithLocation(res, `${apiUrls.notes}/${noteJson.id}`).json(noteJson)
 })
 
@@ -180,6 +180,7 @@ const addGuestInteraction = asyncHandler(async (req: Request, res: Response) => 
         new CreateGuestNoteInteractionDTO(type, noteId, guestId, req.ip)
     await noteInteractionRepo.createGuestInteraction(createGuestNoteInteractionDTO)
 
+    delCacheKeys(['note-'])
     status200Ok(res).send()
 })
 
@@ -199,6 +200,7 @@ const addUserInteraction = asyncHandler(async (req: Request, res: Response) => {
     const createUserNoteInteractionDTO = new CreateUserNoteInteractionDTO(type, noteId, userId)
     await noteInteractionRepo.createUserInteraction(createUserNoteInteractionDTO)
 
+    delCacheKeys(['note-'])
     status200Ok(res).send()
 })
 

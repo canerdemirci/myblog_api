@@ -313,6 +313,7 @@ const addGuestInteraction = asyncHandler(async (req: Request, res: Response) => 
         new CreateGuestPostInteractionDTO(type, postId, guestId, req.ip)
     await postInteractionRepo.createGuestInteraction(createGuestPostInteractionDTO)
 
+    delCacheKeys(['post-'])
     status200Ok(res).send()
 })
 
@@ -333,6 +334,7 @@ const addUserInteraction = asyncHandler(async (req: Request, res: Response) => {
         new CreateUserPostInteractionDTO(type, postId, userId)
     await postInteractionRepo.createUserInteraction(createUserPostInteractionDTO)
 
+    delCacheKeys(['post-'])
     status200Ok(res).send()
 })
 
