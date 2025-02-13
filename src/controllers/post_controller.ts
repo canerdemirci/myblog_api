@@ -268,7 +268,7 @@ const createPost = asyncHandler(async (req: Request, res: Response) => {
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     const post = await postRepo.createPost(createPostDTO, createTagDTOS)
     const postJson = post.toObject()
-    delCacheKeys(['post-'])
+    delCacheKeys(['post-', 'tag-'])
     status201CreatedWithLocation(res, `${apiUrls.posts}/${postJson.id}`).json(postJson)
 })
 
@@ -360,7 +360,7 @@ const updatePost = asyncHandler(async (req: Request, res: Response) => {
     const updatePostDTO = new UpdatePostDTO(id, title, images, content, description, cover)
     const createTagDTOS = tags.map(t => new CreateTagDTO(t))
     await postRepo.updatePost(updatePostDTO, createTagDTOS)
-    delCacheKeys(['post-'])
+    delCacheKeys(['post-', 'tag-'])
     status204NoContent(res)
 })
 
