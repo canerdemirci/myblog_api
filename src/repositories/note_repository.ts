@@ -24,13 +24,15 @@ export default class NoteRepository {
     }
 
     /**
-     * Fetches all notes from database.
+     * Fetches notes at most {take} from database.
+     * @param take number
      * @throws Error
      * @returns Promise < NoteDTO[] >
      */
-    async getNotes() : Promise<NoteDTO[]> {
+    async getNotes(take?: number) : Promise<NoteDTO[]> {
         const notes = await prismaClient.note.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            ...(take && { take: take })
         })
 
         return notes.map(n => NoteDTO.fromDB(n))

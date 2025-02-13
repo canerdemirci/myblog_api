@@ -615,12 +615,19 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
   
-    # Get all notes --------------------------------------------------------------
+    # Get notes --------------------------------------------------------------
     get:
       tags:
         - Notes
-      summary: "Retrieves all notes"
-      description: "Retrieves all notes"
+      summary: "Retrieves notes at most {take}"
+      description: "Retrieves notes at most {take}"
+      parameters:
+        - in: query
+          name: take
+          required: false
+          description: "How much note"
+          schema:
+            type: string
       responses:
         "401":
           $ref: "#/components/responses/UnauthorizedError"

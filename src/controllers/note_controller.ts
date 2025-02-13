@@ -38,19 +38,26 @@ const noteRepo = new NoteRepository()
 const noteInteractionRepo = new NoteInteractionRepository()
 
 /**
- * * Fetches all notes from database or chache
- * * REQUEST: GET
+ * * Fetches notes at most {take} from database or chache
+ * * REQUEST: take - number - GET
  * * RESPONSE: 200 OK - Json - Note[]
  * @throws 401 Unauthorized
  * @throws 400 Bad request
  * @throws 500 Internal server error
  */
 const getNotes = asyncHandler(async (req: Request, res: Response) => {
-    const chacheKey = 'note-all'
+    const take = req.query.take as string
+    const takeNumber = take ? (isNaN(parseInt(take)) ? undefined : parseInt(take)) : undefined
+
+    if (takeNumber !== undefined && takeNumber < 1) {
+        throw new ApiError(404, 'Invalid take number')
+    }
+    
+    const chacheKey = takeNumber !== undefined ? `note-${takeNumber}` : 'note-all'
     const chacedData = cacher.get(chacheKey)
 
     if (!chacedData) {
-        const notesData = await noteRepo.getNotes()
+        const notesData = await noteRepo.getNotes(takeNumber)
         const notes = notesData.map((n: NoteDTO) => n.toObject())
         cacher.set(chacheKey, notes, 60 * 60 * 24 * 7)
         status200Ok(res).json(notes)
