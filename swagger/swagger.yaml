@@ -378,8 +378,8 @@ paths:
     get:
       tags:
         - Posts
-      summary: "Get post guest interactions"
-      description: "Get post guest interactions"
+      summary: "Get post user interactions"
+      description: "Get post user interactions"
       parameters:
         - in: query
           name: postId
@@ -394,9 +394,9 @@ paths:
           schema:
             type: string
         - in: query
-          name: guestId
+          name: userId
           required: true
-          description: "Guest id"
+          description: "User id"
           schema:
             type: string
       responses:
