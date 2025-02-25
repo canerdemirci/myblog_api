@@ -8,6 +8,7 @@ export const apiUrls = {
     users: '/api/users',
     statistics: '/api/statistics',
     addnewguestip: '/api/statistics/addnewguestip',
+    getDbBackup: '/api/backup/db',
     docs: '/api-docs',
     static: '/api/static',
     upload: '/api/upload',

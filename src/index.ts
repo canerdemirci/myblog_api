@@ -17,6 +17,7 @@ import YAML from 'yaml' // For creating swagger documentation (swagger content)
 import fs from 'fs' // For reading swagger yaml file
 import path from 'path'
 import multer from 'multer' // For file uploads
+import { exec } from 'child_process' // For executing pg_dump
 import { apiUrls } from './constants'
 import { status200Ok, status204NoContent } from './controllers/responses'
 import postRouter from './routes/posts'
@@ -215,6 +216,30 @@ app.delete(
         }
     }
 )
+// Database backup
+app.get(apiUrls.getDbBackup, (req: Request, res: Response, next: NextFunction) => {
+    const fileName = `backup-${Date.now()}.sql`
+    const backupFilePath = path.join(__dirname, `../uploads/backup/db/${fileName}`)
+    const backupDir = path.dirname(backupFilePath)
+
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true })
+    }
+
+    const command = 
+        `pg_dump --dbname=postgresql` +
+        `://${process.env.DB_USER}:${process.env.DB_PASSWORD}` +
+        `@${process.env.DB_HOST}:5432/${process.env.DB_NAME} --file=${backupFilePath}`
+
+    exec(command, (error, stdout, stderr) => {
+        if (error || stderr) {
+            console.error('Backup failed')
+            return next(error)
+        }
+        console.log(`Backup successful! File saved to ${backupFilePath}`)
+        return res.json({ file: fileName })
+    })
+})
 // post router
 app.use(apiUrls.posts, postRouter)
 // note router

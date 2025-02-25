@@ -1691,6 +1691,27 @@ paths:
         "500":
           $ref: "#/components/responses/ServerError"
 
+  /backup/db:
+    get:
+      tags:
+        - Database Backup
+      summary: Database backup route. It responds with backup file name.
+      responses:
+        "200":
+          description: "Backup created successfully"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  file:
+                    type: string
+                
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
   /static/{fileName}:
     get:
       tags:
