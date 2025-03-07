@@ -3,6 +3,7 @@
 **This is my personal blog app’s Rest API consists of Node JS (Typescript), Express JS and Prisma ORM (PostgreSQL).**
 
 [![Watch the video](https://img.youtube.com/vi/6qjsXQfVpkE/maxresdefault.jpg)](https://www.youtube.com/watch?v=6qjsXQfVpkE)
+[![Watch the video](https://img.youtube.com/vi/PZXf5SrEvn4/maxresdefault.jpg)](https://www.youtube.com/watch?v=PZXf5SrEvn4)
 
 | **Production Server:** | [https://square-danyette-canerdemirci-63378b97.koyeb.app](https://square-danyette-canerdemirci-63378b97.koyeb.app/api-docs/#/) |
 | --- | --- |
